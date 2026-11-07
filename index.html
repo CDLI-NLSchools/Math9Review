@@ -6861,7 +6861,7 @@ function startExam(){
   $("printArea").innerHTML=paper;
   $("session").innerHTML='<div class="card"><p>Your '+(single?"practice unit test":"practice exam")+' is ready: '+ex.srItems.length+' selected-response questions and '+ex.crItems.length+' constructed-response questions, '+ex.total+' marks in total. The exam paper and the answer key print separately.</p>'
     +(ex.short?'<p class="thinNote">Heads up: the bank could not fill every exam slot for this selection yet, so this paper runs short of the full blueprint.</p>':"")
-    +'<div class="row"><button type="button" id="editExamBtn">Edit the exam</button><button type="button" id="printPaperBtn">Print the exam paper</button><button type="button" id="printKeyBtn" class="sec">Print the answer key</button><button type="button" id="wordBtn" class="sec">Download Word file</button><button type="button" id="copyDocsBtn" class="sec">Copy for Google Docs</button><button type="button" id="kahootBtn" class="sec">Download for Kahoot</button><button type="button" id="blooketBtn" class="sec">Download for Blooket</button></div>'
+    +'<div class="row"><button type="button" id="editExamBtn">Edit the exam</button><button type="button" id="printPaperBtn">Print the exam paper</button><button type="button" id="printKeyBtn" class="sec">Print the answer key</button><button type="button" id="wordBtn" class="sec">Download Word file</button><button type="button" id="copyDocsBtn" class="sec">Copy for Google Docs</button></div>'
     +'<p class="hint" id="editHint" hidden>Editing is on: click any text in the exam below and type to change it, or delete a question you do not want. Drag the bar at the bottom of a Section B answer box to make that box taller or shorter. What you see is what prints and what the Word file contains.</p>'
     +'<p class="hint" id="copyStatus" role="status"></p>'
     +'<div class="sheetPrev" id="sheetPrev">'+paper+'<div class="keybreak">'+key+'</div></div></div>';
@@ -6874,8 +6874,6 @@ function startExam(){
   });
   $("wordBtn").addEventListener("click",function(){downloadWordFile($("copyStatus"));});
   $("copyDocsBtn").addEventListener("click",function(){copyFrom($("sheetPrev"),"docs",$("copyStatus"));});
-  $("kahootBtn").addEventListener("click",function(){exportGame("kahoot",ex.srItems.map(function(it){return it.q;}),$("copyStatus"),ex.crItems.length);});
-  $("blooketBtn").addEventListener("click",function(){exportGame("blooket",ex.srItems.map(function(it){return it.q;}),$("copyStatus"),ex.crItems.length);});
   $("printPaperBtn").addEventListener("click",function(){var pp=previewParts();if(pp){$("printArea").innerHTML=pp.paper;}else{$("printArea").innerHTML=paper;typesetMath($("printArea"));}window.print();});
   $("printKeyBtn").addEventListener("click",function(){var pp=previewParts();if(pp){$("printArea").innerHTML=pp.key;}else{$("printArea").innerHTML=key;typesetMath($("printArea"));}window.print();});
 }
