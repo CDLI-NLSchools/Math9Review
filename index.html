@@ -7655,7 +7655,7 @@ function setPreset(units,cap,mix){state.units=units;state.inds=[];state.midCap=!
 $("presetMid").addEventListener("click",function(){setPreset([1,2,3,4],false,[20,60,20]);});
 $("presetFinal").addEventListener("click",function(){setPreset([5,6,7,8,9],false,[20,60,20]);});
 $("presetAll").addEventListener("click",function(){setPreset([1,2,3,4,5,6,7,8,9]);});
-$("faceStart").addEventListener("click",function(){startOnline();});
+$("faceStart").addEventListener("click",function(){if(!settings().units.length){var bb=$("builderBox");bb.open=true;bb.scrollIntoView({behavior:"smooth"});return;}startOnline();});
 $("seedGen").addEventListener("click",function(){var words=["otter","maple","harbour","compass","lantern","meadow","pebble","willow","falcon","juniper","birch","cove"];$("seedIn").value=pick(words)+"-"+ri(10,99);refreshFace();});
 $("seedIn").addEventListener("input",refreshFace);
 $("countIn").addEventListener("input",refreshFace);
