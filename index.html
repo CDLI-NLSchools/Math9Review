@@ -501,7 +501,8 @@ var BANK=[];
 function E(id,unit,indicators,level,kind,gen,hints){var e={id:id,unit:unit,indicators:indicators,level:level,kind:kind,gen:gen};if(hints){e.hint1=hints[0]||"";e.hint2=hints[1]||"";}BANK.push(e);}
 /* BANK-SRC-BEGIN */
 /* Math 9 Review bank source. Mid-scope tranche (Units 1 to 4) assembled
-   November 7, 2026 from tranche1/unit1.js to unit4.js. FR returns the raw
+   November 7, 2026 from tranche1/unit1.js to unit4.js, plus the
+   top-up tranche appended the same day from tranche1/unitN-topup.js. FR returns the raw
    \frac fragment for use INSIDE math delimiters, defined here for the
    entries that use it. CR_MARKS stays at the end of this file. */
 function FR(n,d){return "\\frac{"+n+"}{"+d+"}";}
@@ -1985,6 +1986,1021 @@ E("u4-error-var", 4, ["8.13","8.10"], 3, "var", varset([
   }
 ]), ["Compare the student result with a careful step by step simplification of your own.", "First redo the first step yourself, watching signs and like terms, then compare."]);
 
+/* Top-up tranche (November 7, 2026): Unit 1 additions from tranche1/unit1-topup.js */
+// Unit 1 top-up: Rational Numbers (Math 9, NL). Entries only; uses the u1
+// helpers (u1gcd, u1red, u1frac, u1round) already defined in unit1.js.
+
+// T1. L2, 6.2: nested brackets mixing a fraction and decimals, no calculator, MC.
+E("u1-ooo-brackets-mc", 1, ["6.2"], 2, "gen", function () {
+  var fracPool = [
+    { n: 1, d: 2, v: 0.5 }, { n: 3, d: 4, v: 0.75 }, { n: 1, d: 4, v: 0.25 },
+    { n: 2, d: 5, v: 0.4 }, { n: 3, d: 5, v: 0.6 }, { n: 4, d: 5, v: 0.8 },
+    { n: 1, d: 5, v: 0.2 }, { n: 3, d: 10, v: 0.3 }, { n: 7, d: 10, v: 0.7 },
+    { n: 9, d: 10, v: 0.9 }, { n: 5, d: 4, v: 1.25 }, { n: 3, d: 2, v: 1.5 }
+  ];
+  var P = null;
+  for (var tries = 0; tries < 300 && !P; tries++) {
+    var fr = pick(fracPool);
+    var c = ri(2, 40) / 4;
+    var S = fr.v + c;
+    var D = ri(3, 30) / 2;
+    var a = D + S;
+    var d = pick([2, 3, 4, 5, 6]);
+    var e = pick([2, 3, 4, 5]);
+    var f = ri(5, 95) / 10;
+    var g = pick([2, 5, 10]);
+    var q1 = D / d, q2 = f / g;
+    if (Math.abs(q1 - u1round(q1, 2)) > 1e-9) continue;
+    if (Math.abs(q2 - u1round(q2, 2)) > 1e-9) continue;
+    var V = q1 * e + q2;
+    var E1 = D / (d * e) + q2;
+    var E2 = (a - fr.v + c) / d * e + q2;
+    var E3 = (q1 * e + f) / g;
+    var E4 = (a + S) / d * e + q2;
+    var keys = [V, E1, E2, E3, E4].map(function (x) { return fmt(u1round(x, 2)); });
+    if (new Set(keys).size < 5) continue;
+    P = { fn: fr.n, fd: fr.d, fv: fr.v, c: c, S: S, D: D, a: a, d: d, e: e, f: f, g: g, q1: q1, q2: q2, V: V, E1: E1, E2: E2, E3: E3, E4: E4 };
+  }
+  if (!P) {
+    P = { fn: 3, fd: 4, fv: 0.75, c: 2.25, S: 3, D: 6, a: 9, d: 3, e: 2, f: 4.5, g: 5, q1: 2, q2: 0.9, V: 4.9, E1: 1.9, E2: 7.9, E3: 1.7, E4: 8.9 };
+  }
+  var expr = "\\((" + fmt(P.a) + " - (" + FR(P.fn, P.fd) + " + " + fmt(P.c) + ")) \\div " + P.d + " \\times " + P.e + " + " + fmt(P.f) + " \\div " + P.g + "\\)";
+  var prompt = "Evaluate without using a calculator: " + expr;
+  var steps = "\\[ \\begin{aligned} (" + fmt(P.a) + " - (" + FR(P.fn, P.fd) + " + " + fmt(P.c) + ")) \\div " + P.d + " \\times " + P.e + " + " + fmt(P.f) + " \\div " + P.g + " &= (" + fmt(P.a) + " - " + fmt(P.S) + ") \\div " + P.d + " \\times " + P.e + " + " + fmt(P.f) + " \\div " + P.g + " \\\\ &= " + fmt(P.D) + " \\div " + P.d + " \\times " + P.e + " + " + fmt(P.q2) + " \\\\ &= " + fmt(P.q1) + " \\times " + P.e + " + " + fmt(P.q2) + " \\\\ &= " + fmt(P.q1 * P.e) + " + " + fmt(P.q2) + " \\\\ &= " + fmt(P.V) + " \\end{aligned} \\]";
+  var solution = "Work the inner brackets first, then do divisions and multiplications from left to right, then the addition: " + steps + " So the value is <b>" + fmt(P.V) + "</b>.";
+  var errs = [
+    { t: fmt(u1round(P.E1, 2)), fb: "This multiplies " + P.d + " by " + P.e + " before dividing, but division and multiplication are done from left to right, and the division comes first here." },
+    { t: fmt(u1round(P.E2, 2)), fb: "This begins the outer bracket before finishing the inner brackets, so the subtraction uses the wrong amount." },
+    { t: fmt(u1round(P.E3, 2)), fb: "This adds " + fmt(P.f) + " before the final division, but division is done before addition." },
+    { t: fmt(u1round(P.E4, 2)), fb: "This adds the bracket amount to " + fmt(P.a) + " instead of subtracting it, a sign slip." }
+  ];
+  return mcq(prompt,
+    { t: fmt(P.V), fb: "Correct. The inner brackets are done first, then divisions and multiplications from left to right." },
+    shuffle(errs).slice(0, 3),
+    solution, { mode: "ooo-brackets", a: P.a, c: P.c, d: P.d, e: P.e, f: P.f, g: P.g });
+}, ["Do the innermost brackets first, then work divisions and multiplications from left to right.", "First add the fraction and the decimal inside the inner brackets."]);
+
+// T2. L2, 6.3: one calculator entry, ask for the displayed rounded value, MC.
+E("u1-ooo-calc-display", 1, ["6.3"], 2, "gen", function () {
+  var names = ["Alex", "Jamie", "Robin", "Casey", "Taylor", "Jordan"];
+  var P = null;
+  for (var tries = 0; tries < 300 && !P; tries++) {
+    var nm = pick(names);
+    var a = ri(15, 95) / 10;
+    var b = ri(5, 60) / 10;
+    var c = ri(5, 95) / 10;
+    var d = pick([2, 4, 5, 8]);
+    var e = ri(2, 9);
+    var f = ri(5, 60) / 10;
+    var places = pick([1, 2]);
+    var S = b + c;
+    var Q = S / d;
+    var V = a + Q * e - f;
+    if (V <= 0.5) continue;
+    var EL = ((a + b + c) / d) * e - f;
+    var ED = a + b + (c / d) * e - f;
+    var EM = a + u1round(Q, places === 2 ? 1 : 0) * e - f;
+    var keys = [V, EL, ED, EM].map(function (x) { return fmtF(u1round(x, places), places); });
+    if (new Set(keys).size < 4) continue;
+    P = { nm: nm, a: a, b: b, c: c, d: d, e: e, f: f, places: places, S: S, Q: Q, V: V, EL: EL, ED: ED, EM: EM };
+  }
+  if (!P) {
+    P = { nm: "Alex", a: 2.5, b: 1.5, c: 4.7, d: 4, e: 3, f: 1.2, places: 2, S: 6.2, Q: 1.55, V: 5.95, EL: 5.325, ED: 6.325, EM: 6.1 };
+  }
+  var ans = u1round(P.V, P.places);
+  var expr = "\\(" + fmt(P.a) + " + (" + fmt(P.b) + " + " + fmt(P.c) + ") \\div " + P.d + " \\times " + P.e + " - " + fmt(P.f) + "\\)";
+  var prompt = P.nm + " keys the whole expression into a calculator in one entry: " + expr + " What value does the calculator show, rounded to " + P.places + " decimal place" + (P.places > 1 ? "s" : "") + "?";
+  var steps = "\\[ \\begin{aligned} " + fmt(P.a) + " + (" + fmt(P.b) + " + " + fmt(P.c) + ") \\div " + P.d + " \\times " + P.e + " - " + fmt(P.f) + " &= " + fmt(P.a) + " + " + fmt(P.S) + " \\div " + P.d + " \\times " + P.e + " - " + fmt(P.f) + " \\\\ &= " + fmt(P.a) + " + " + fmt(P.Q, 4) + " \\times " + P.e + " - " + fmt(P.f) + " \\\\ &= " + fmt(P.a) + " + " + fmt(P.Q * P.e, 4) + " - " + fmt(P.f) + " \\\\ &= " + fmt(P.V, 4) + " \\end{aligned} \\]";
+  var solution = "The calculator follows the order of operations, brackets first, and keeps full precision until the end: " + steps + " Rounded to " + P.places + " decimal place" + (P.places > 1 ? "s" : "") + ", the calculator shows <b>" + fmtF(ans, P.places) + "</b>.";
+  return mcq(prompt,
+    { t: fmtF(ans, P.places), fb: "Correct. The calculator follows the order of operations and rounds only at the end." },
+    [
+      { t: fmtF(u1round(P.EL, P.places), P.places), fb: "This is the result of keying the numbers strictly from left to right and ignoring the brackets." },
+      { t: fmtF(u1round(P.ED, P.places), P.places), fb: "This drops the brackets around the sum, so only " + fmt(P.c) + " is divided by " + P.d + " instead of the whole sum." },
+      { t: fmtF(u1round(P.EM, P.places), P.places), fb: "This rounds the quotient to " + (P.places === 2 ? "1 decimal place" : "the nearest whole number") + " before multiplying, instead of rounding only the final answer." }
+    ],
+    solution, { mode: "ooo-calc-display", a: P.a, b: P.b, c: P.c, d: P.d, e: P.e, f: P.f, places: P.places });
+}, ["A calculator follows the order of operations when the whole expression is keyed in as one entry.", "Work out the bracketed sum first, and keep full precision until the final rounding."]);
+
+// T3. L2, 6.4: worked solution with one error, ask for the correct final value, MC.
+E("u1-ooo-error-value", 1, ["6.4"], 2, "gen", function () {
+  var scen = ri(0, 3);
+  var R = null;
+  for (var tries = 0; tries < 500 && !R; tries++) {
+    var exprM, worked, solSteps, correctVal, wrongVal, e1Val, e2Val, e1fb, e2fb, errText, tag;
+    if (scen === 0) {
+      var a0 = ri(2, 15), b0 = ri(2, 12), c0 = ri(3, 9), d0 = ri(1, 12);
+      var S0 = a0 + b0;
+      correctVal = a0 + b0 * c0 - d0;
+      wrongVal = S0 * c0 - d0;
+      e1Val = a0 + b0 * (c0 - d0);
+      e2Val = a0 + b0 * c0 + d0;
+      exprM = a0 + " + " + b0 + " \\times " + c0 + " - " + d0;
+      worked = exprM + " &= " + S0 + " \\times " + c0 + " - " + d0 + " \\\\ &= " + (S0 * c0) + " - " + d0 + " \\\\ &= " + wrongVal;
+      solSteps = exprM + " &= " + a0 + " + " + (b0 * c0) + " - " + d0 + " \\\\ &= " + correctVal;
+      errText = "The student added before multiplying in the first step, but multiplication is done before addition.";
+      e1fb = "This groups the subtraction with the multiplication, which changes the order of operations.";
+      e2fb = "This adds the last number instead of subtracting it.";
+      tag = "errval-add-first";
+    } else if (scen === 1) {
+      var a1 = ri(2, 9), b1 = ri(2, 12), c1 = ri(1, 12), d1 = pick([2, 3, 4, 5, 6]);
+      var S1 = b1 + c1;
+      if ((a1 * S1) % d1 !== 0) continue;
+      correctVal = a1 * S1 / d1;
+      wrongVal = (a1 * b1 + c1) / d1;
+      e1Val = a1 * b1 + c1 / d1;
+      e2Val = a1 * S1 * d1;
+      exprM = a1 + " \\times (" + b1 + " + " + c1 + ") \\div " + d1;
+      worked = exprM + " &= (" + (a1 * b1) + " + " + c1 + ") \\div " + d1 + " \\\\ &= " + fmt(wrongVal);
+      solSteps = exprM + " &= " + a1 + " \\times " + S1 + " \\div " + d1 + " \\\\ &= " + correctVal;
+      errText = "The student multiplied before evaluating the brackets, but brackets are done first.";
+      e1fb = "This drops the brackets entirely, so only " + c1 + " is divided by " + d1 + ".";
+      e2fb = "This multiplies by " + d1 + " at the end instead of dividing by it.";
+      tag = "errval-mult-first";
+    } else if (scen === 2) {
+      var dv = pick([2, 3, 4, 5]);
+      var b2 = dv * ri(1, 6);
+      var a2 = b2 + dv * ri(1, 6);
+      var d2 = ri(2, 9), e2 = ri(2, 9);
+      correctVal = a2 - b2 / dv + d2 * e2;
+      wrongVal = (a2 - b2) / dv + d2 * e2;
+      e1Val = a2 - b2 / dv - d2 * e2;
+      e2Val = ((a2 - b2) / dv + d2) * e2;
+      exprM = a2 + " - " + b2 + " \\div " + dv + " + " + d2 + " \\times " + e2;
+      worked = exprM + " &= (" + (a2 - b2) + ") \\div " + dv + " + " + d2 + " \\times " + e2 + " \\\\ &= " + ((a2 - b2) / dv) + " + " + (d2 * e2) + " \\\\ &= " + wrongVal;
+      solSteps = exprM + " &= " + a2 + " - " + (b2 / dv) + " + " + (d2 * e2) + " \\\\ &= " + correctVal;
+      errText = "The student subtracted before dividing, but division is done before subtraction.";
+      e1fb = "This subtracts the product as well, but the expression adds it.";
+      e2fb = "This works strictly from left to right, multiplying at the end instead of multiplying before adding.";
+      tag = "errval-sub-first";
+    } else {
+      var a3 = ri(15, 40) / 2, b3 = ri(1, 10), c3 = ri(1, 10), d3 = ri(2, 9);
+      var S3 = b3 + c3;
+      if (a3 <= S3) continue;
+      correctVal = (a3 - S3) * d3;
+      wrongVal = (a3 - b3 + c3) * d3;
+      e1Val = a3 - S3 * d3;
+      e2Val = (a3 - S3) + d3;
+      exprM = "(" + fmt(a3) + " - (" + b3 + " + " + c3 + ")) \\times " + d3;
+      worked = exprM + " &= (" + fmt(a3 - b3) + " + " + c3 + ") \\times " + d3 + " \\\\ &= " + fmt(a3 - b3 + c3) + " \\times " + d3 + " \\\\ &= " + fmt(wrongVal);
+      solSteps = exprM + " &= (" + fmt(a3) + " - " + S3 + ") \\times " + d3 + " \\\\ &= " + fmt(a3 - S3) + " \\times " + d3 + " \\\\ &= " + fmt(correctVal);
+      errText = "The student started the outer bracket before finishing the inner brackets, but the innermost brackets are done first.";
+      e1fb = "This drops the outer brackets and multiplies the inner sum before subtracting.";
+      e2fb = "This adds the last number instead of multiplying by it.";
+      tag = "errval-outer-first";
+    }
+    var keys = [correctVal, wrongVal, e1Val, e2Val].map(function (x) { return fmt(u1round(x, 2)); });
+    if (new Set(keys).size < 4) continue;
+    R = { exprM: exprM, worked: worked, solSteps: solSteps, correctVal: correctVal, wrongVal: wrongVal, e1Val: e1Val, e2Val: e2Val, e1fb: e1fb, e2fb: e2fb, errText: errText, tag: tag };
+  }
+  if (!R) {
+    R = {
+      exprM: "4 + 3 \\times 5 - 2",
+      worked: "4 + 3 \\times 5 - 2 &= 7 \\times 5 - 2 \\\\ &= 35 - 2 \\\\ &= 33",
+      solSteps: "4 + 3 \\times 5 - 2 &= 4 + 15 - 2 \\\\ &= 17",
+      correctVal: 17, wrongVal: 33, e1Val: 13, e2Val: 21,
+      e1fb: "This groups the subtraction with the multiplication, which changes the order of operations.",
+      e2fb: "This adds the last number instead of subtracting it.",
+      errText: "The student added before multiplying in the first step, but multiplication is done before addition.",
+      tag: "errval-add-first"
+    };
+  }
+  var prompt = "A student's work for an expression is shown below. \\[ \\begin{aligned} " + R.worked + " \\end{aligned} \\] What is the correct value of the expression?";
+  var solution = R.errText + " Done correctly: \\[ \\begin{aligned} " + R.solSteps + " \\end{aligned} \\] So the correct value is <b>" + fmt(R.correctVal) + "</b>.";
+  return mcq(prompt,
+    { t: fmt(R.correctVal), fb: "Correct. Redone in the proper order, the expression gives this value." },
+    [
+      { t: fmt(u1round(R.wrongVal, 2)), fb: "That is the value in the student's work, which contains the order of operations error." },
+      { t: fmt(u1round(R.e1Val, 2)), fb: R.e1fb },
+      { t: fmt(u1round(R.e2Val, 2)), fb: R.e2fb }
+    ],
+    solution, { mode: R.tag, scen: scen });
+}, ["Compare the student's steps with the order of operations to spot where the order went wrong.", "Redo the expression yourself: brackets first, then multiplication and division, then addition and subtraction."]);
+
+/* Top-up tranche (November 7, 2026): Unit 2 additions from tranche1/unit2-topup.js */
+/* Unit 2 top-up tranche: five companion entries. Helpers u2gcd, u2r1, u2r2,
+   u2d3 and u2nonSquare are defined in unit2.js and the assembled bank. */
+
+E("u2-sqrt-fraction", 2, ["6.9"], 1, "gen", function(){
+  if(pick(["fraction","decimal"])==="fraction"){
+    var a=ri(2,15), b=ri(2,15), g=0;
+    while(u2gcd(a,b)!==1&&g<60){a=ri(2,15);b=ri(2,15);g++;}
+    var correct="\\("+FR(a,b)+"\\)";
+    var cands=[
+      {t:"\\("+FR(a,b*b)+"\\)", fb:"That roots the top part only: the bottom part must be rooted too."},
+      {t:"\\("+FR(a*a,b)+"\\)", fb:"That roots the bottom part only: the top part must be rooted too."},
+      {t:"\\("+FR(a+1,b)+"\\)", fb:"Squaring it gives a top part of "+((a+1)*(a+1))+", not "+(a*a)+": check both parts."},
+      {t:"\\("+FR(a,b+1)+"\\)", fb:"Squaring it gives a bottom part of "+((b+1)*(b+1))+", not "+(b*b)+": check both parts."},
+      {t:"\\("+FR(a+1,b+1)+"\\)", fb:"Squaring it changes both parts: compare each part with the one shown."}
+    ];
+    var opts=[], seen={};
+    for(var i=0;i<cands.length&&opts.length<3;i++){if(cands[i].t!==correct&&!seen[cands[i].t]){seen[cands[i].t]=1;opts.push(cands[i]);}}
+    return mcq("What is \\(\\sqrt{"+FR(a*a,b*b)+"}\\)? Give the exact value.", {t:correct, fb:"Yes: "+a+" squared is "+(a*a)+" and "+b+" squared is "+(b*b)+"."}, opts,
+      "Root the top and the bottom separately: \\[ \\begin{aligned} \\sqrt{"+FR(a*a,b*b)+"} &= "+FR(a,b)+" \\end{aligned} \\] The square root is <b>\\("+FR(a,b)+"\\)</b>.",
+      {mode:"fraction", a:a, b:b});
+  }
+  var k=ri(3,39); var rd=u2r1(k/10); var nd=u2r2(rd*rd);
+  var dc=u2d3(rd,[u2r1(rd+0.1),u2r1(rd-0.1),u2r1(rd*2),u2r1(rd+0.2),u2r1(rd/2),u2r1(rd+1)]);
+  var dopts=dc.map(function(d){return {t:fmt(d), fb:fmt(d)+" squared is "+fmt(u2r2(d*d))+", not "+fmt(nd)+": try another tenth."};});
+  return mcq("What is \\(\\sqrt{"+fmt(nd)+"}\\)? Give the exact value.", {t:fmt(rd), fb:"Yes: "+fmt(rd)+" times "+fmt(rd)+" equals "+fmt(nd)+"."}, dopts,
+    "Find the decimal that multiplies by itself to give "+fmt(nd)+": \\[ \\begin{aligned} "+fmt(rd)+" \\times "+fmt(rd)+" &= "+fmt(nd)+" \\\\ \\sqrt{"+fmt(nd)+"} &= "+fmt(rd)+" \\end{aligned} \\] The square root is <b>"+fmt(rd)+"</b>.",
+    {mode:"decimal", n:nd});
+}, ["For a fraction, root the top and the bottom separately; for a decimal, hunt among the tenths.", "Ask which number, multiplied by itself, gives exactly the value under the root sign."]);
+
+E("u2-number-from-root", 2, ["6.11"], 2, "gen", function(){
+  if(pick(["fraction","decimal"])==="fraction"){
+    var p=ri(2,12), q=ri(2,12), g=0;
+    while(u2gcd(p,q)!==1&&g<60){p=ri(2,12);q=ri(2,12);g++;}
+    var correct="\\("+FR(p*p,q*q)+"\\)";
+    var cands=[
+      {t:"\\("+FR(2*p,q)+"\\)", fb:"That is double the root: squaring means multiply the root by itself, not by 2."},
+      {t:"\\("+FR(p,2*q)+"\\)", fb:"That is half the root: the number comes from squaring the root, not halving it."},
+      {t:"\\("+FR((p+1)*(p+1),q*q)+"\\)", fb:"That squares a neighbouring fraction: use the root shown, with top "+p+" and bottom "+q+"."},
+      {t:"\\("+FR(p*p,(q+1)*(q+1))+"\\)", fb:"That squares a neighbouring fraction: use the root shown, with top "+p+" and bottom "+q+"."},
+      {t:"\\("+FR(p*p,q)+"\\)", fb:"Only the top was squared: the bottom part must be squared as well."}
+    ];
+    var opts=[], seen={};
+    for(var i=0;i<cands.length&&opts.length<3;i++){if(cands[i].t!==correct&&!seen[cands[i].t]){seen[cands[i].t]=1;opts.push(cands[i]);}}
+    return mcq("A positive number has square root \\("+FR(p,q)+"\\) . What is the number?", {t:correct, fb:"Yes: square the top and the bottom separately."}, opts,
+      "Squaring undoes a square root, and both parts are squared: \\[ \\begin{aligned} \\left("+FR(p,q)+"\\right)^{2} &= "+FR(p,q)+" \\times "+FR(p,q)+" \\\\ &= "+FR(p*p,q*q)+" \\end{aligned} \\] The number is <b>\\("+FR(p*p,q*q)+"\\)</b>.",
+      {mode:"fraction", p:p, q:q});
+  }
+  var k=ri(4,29); var g2=0;
+  while(k%10===0&&g2<40){k=ri(4,29);g2++;}
+  var rd=u2r1(k/10); var nd=u2r2(rd*rd);
+  var cands2=[
+    {v:u2r2(2*rd), fb:"That is double the root: squaring means multiply the root by itself, not by 2."},
+    {v:u2r2((rd+0.1)*(rd+0.1)), fb:"That squares the next tenth up: use the root shown, "+fmt(rd)+"."},
+    {v:u2r2((rd-0.1)*(rd-0.1)), fb:"That squares the next tenth down: use the root shown, "+fmt(rd)+"."},
+    {v:u2r2(nd+1), fb:"That adds 1 to the squared value: just multiply the root by itself."},
+    {v:u2r2(nd+0.1), fb:"That is a little more than the squared root: multiply the root by itself exactly."}
+  ];
+  var dopts=[], seen2={};
+  for(var j=0;j<cands2.length&&dopts.length<3;j++){var v=cands2[j].v; if(v!==nd&&v>0&&!seen2[v]){seen2[v]=1;dopts.push({t:fmt(v), fb:cands2[j].fb});}}
+  return mcq("A positive number has square root "+fmt(rd)+". What is the number?", {t:fmt(nd), fb:"Yes: "+fmt(rd)+" times "+fmt(rd)+" equals "+fmt(nd)+"."}, dopts,
+    "Squaring undoes a square root: \\[ \\begin{aligned} "+fmt(rd)+"^{2} &= "+fmt(rd)+" \\times "+fmt(rd)+" \\\\ &= "+fmt(nd)+" \\end{aligned} \\] The number is <b>"+fmt(nd)+"</b>.",
+    {mode:"decimal", r:rd});
+}, ["Squaring and square roots undo each other, so square the given root.", "Multiply the root by itself, squaring the top and bottom separately for a fraction."]);
+
+E("u2-calc-root-round", 2, ["6.6"], 2, "gen", function(){
+  var isFrac=pick(["whole","fraction"])==="fraction";
+  var val, label, rn, rd2;
+  if(isFrac){
+    var g=0;
+    while(true){
+      var n0=ri(2,40), d0=ri(2,12), gg=u2gcd(n0,d0);
+      rn=n0/gg; rd2=d0/gg;
+      if(rd2>1){var s1=Math.sqrt(rn), s2=Math.sqrt(rd2); if(!(s1===Math.floor(s1)&&s2===Math.floor(s2))){break;}}
+      if(++g>200){break;}
+    }
+    val=rn/rd2; label=FR(rn,rd2);
+  } else {
+    var nw=u2nonSquare(11,399); val=nw; label=String(nw);
+  }
+  var root=Math.sqrt(val);
+  var ans=u2r2(root);
+  var trunc=Math.floor(root*100)/100;
+  var onedp=u2r1(root);
+  var delta=isFrac?((rn>1)?pick([-1,1]):1):pick([-1,1]);
+  var neigh=isFrac?u2r2(Math.sqrt((rn+delta)/rd2)):u2r2(Math.sqrt(val+delta));
+  var cands=[
+    {v:trunc, fb:"That value is cut off after two decimal places: look at the third decimal and round up when it is 5 or more."},
+    {v:onedp, fb:"That value is rounded to one decimal place: the question asks for two decimal places."},
+    {v:neigh, fb:"That is the root of a neighbouring number: check the value under the root sign."},
+    {v:u2r2(ans+0.01), fb:"That is a rounding slip in the last digit: check the third decimal place on the display."},
+    {v:u2r2(ans-0.01), fb:"That is a rounding slip in the last digit: check the third decimal place on the display."},
+    {v:u2r2(ans+0.02), fb:"That is a rounding slip in the last digit: check the third decimal place on the display."},
+    {v:u2r2(ans-0.02), fb:"That is a rounding slip in the last digit: check the third decimal place on the display."}
+  ];
+  var opts=[], seen={};
+  for(var i=0;i<cands.length&&opts.length<3;i++){var v=cands[i].v; if(v!==ans&&v>0&&!seen[v]){seen[v]=1;opts.push({t:fmtF(v,2), fb:cands[i].fb});}}
+  return mcq("Use a calculator. What is \\(\\sqrt{"+label+"}\\), to two decimal places?", {t:fmtF(ans,2), fb:"Yes: the third decimal place decides the rounding, and it rounds to "+fmtF(ans,2)+"."}, opts,
+    "A calculator gives the root, and the third decimal decides how it rounds: \\[ \\begin{aligned} \\sqrt{"+label+"} &\\approx "+fmt(root)+" \\\\ &\\approx "+fmtF(ans,2)+" \\end{aligned} \\] To two decimal places, the square root is <b>"+fmtF(ans,2)+"</b>.",
+    {mode:isFrac?"fraction":"whole", val:val});
+}, ["Use a calculator for the root, then round the display to two decimal places.", "Read the third decimal digit: it tells you whether the second decimal stays or rounds up."]);
+
+E("u2-approx-explain-gen", 2, ["6.7"], 2, "gen", function(){
+  var N=u2nonSquare(2,99);
+  var places=pick([2,3,4]);
+  var shown=Math.round(Math.sqrt(N)*Math.pow(10,places))/Math.pow(10,places);
+  var shS=fmtF(shown,places);
+  var sq=shown*shown;
+  var frame=pick(["screen","student","project"]);
+  var prompt;
+  if(frame==="screen"){prompt="A calculator shows \\(\\sqrt{"+N+"} \\approx "+shS+"\\). Why is the value on the screen an approximation?";}
+  else if(frame==="student"){prompt="A student says the exact value of \\(\\sqrt{"+N+"}\\) is "+shS+", the value on the calculator screen. Why is the student wrong?";}
+  else {prompt="For a project, a student uses "+shS+" as the value of \\(\\sqrt{"+N+"}\\). Why is "+shS+" called an approximation?";}
+  return mcq(prompt,
+    {t:"Squaring "+shS+" does not give exactly "+N+", because the true root continues past the digits shown", fb:"Right: "+shS+" squared is "+fmt(sq)+", close to "+N+" but not equal to it."},
+    [{t:"The calculator made an arithmetic error while it worked out the root of "+N+", so its digits cannot be trusted", fb:"The calculator works properly: the limit is how many digits can be shown."},
+     {t:"The value is exact, because a root shown to "+places+" decimal places has every one of its digits given in full", fb:"More places still means rounded: the digits of this root continue past them."},
+     {t:"The number "+N+" has no square root at all, so the screen can only show a rough guess in its place", fb:N+" does have a square root: it just never ends or repeats as a decimal."}],
+    "The shown value is rounded, and squaring it shows the gap: \\[ \\begin{aligned} ("+shS+")^{2} &= "+fmt(sq)+" \\\\ &\\ne "+N+" \\end{aligned} \\] Because its square is not exactly "+N+", the shown value is <b>an approximation, not the exact root</b>.",
+    {mode:frame, N:N, places:places});
+}, ["Ask whether squaring the shown value gives back the starting number exactly.", "Square the shown value and compare it with the number under the root sign."]);
+
+E("u2-overlap-pair", 2, ["9.1"], 3, "gen", function(){
+  if(pick(["tri-on-rect","cyl-on-tri"])==="tri-on-rect"){
+    var tr=pick([[3,4,5],[6,8,10],[5,12,13],[8,15,17],[9,12,15]]);
+    var a=tr[0], b=tr[1], c=tr[2];
+    var l=ri(6,14), h=ri(3,9), w=a;
+    var boxSA=2*(l*w+l*h+w*h);
+    var triSA=a*b+(a+b+c)*l;
+    var contact=a*l;
+    var tot=boxSA+triSA-2*contact;
+    return numq("A model is built by joining two solids face to face. The bottom solid is a right rectangular prism "+l+" cm long, "+w+" cm wide and "+h+" cm high. On top of it sits a right triangular prism, a prism with right triangle ends and rectangular sides. Its triangular ends have legs "+a+" cm and "+b+" cm and hypotenuse "+c+" cm, the prism is "+l+" cm long, and its bottom face, "+a+" cm by "+l+" cm, exactly covers the top face of the bottom prism. The face where the two solids join is hidden inside the model. Find the total surface area of the model, in square centimetres.", tot, 0.01,
+      "The overlap is the "+a+" cm by "+l+" cm rectangle where the two prisms join. It is a face of each solid, so it is hidden twice and comes off both surface areas: \\[ \\begin{aligned} \\text{overlap} &= "+a+" \\times "+l+" = "+contact+" \\\\ SA &= "+boxSA+" + "+triSA+" - 2("+contact+") \\\\ &= "+tot+" \\end{aligned} \\] The total surface area is <b>"+tot+" cm\\(^{2}\\)</b>.",
+      {mode:"tri-on-rect", a:a, b:b, c:c, l:l, h:h});
+  }
+  var tr2=pick([[6,8,10],[9,12,15],[12,16,20],[8,15,17]]);
+  var a2=tr2[0], b2=tr2[1], c2=tr2[2];
+  var L=ri(10,16);
+  var r=(a2>=9)?ri(2,4):ri(2,3);
+  var hc=ri(4,10);
+  var triSA2=a2*b2+(a2+b2+c2)*L;
+  var cylSA=u2r2(2*3.14*r*r+2*3.14*r*hc);
+  var circ=u2r2(3.14*r*r);
+  var tot2=u2r1(triSA2+cylSA-2*circ);
+  return numq("A right cylinder stands on a right triangular prism, a prism with right triangle ends and rectangular sides. The triangular ends have legs "+a2+" cm and "+b2+" cm and hypotenuse "+c2+" cm, and the prism is "+L+" cm long. The cylinder has radius "+r+" cm and height "+hc+" cm, and it stands on the rectangular face of the prism that measures "+a2+" cm by "+L+" cm, with its whole base on that face. The part where the two solids touch is hidden inside the finished object. Find the total surface area, in square centimetres. Use \\(\\pi = 3.14\\) and give your answer to one decimal place.", tot2, 0.6,
+    "The overlap is the circle where the cylinder meets the prism. It is hidden on the prism face and it is the base of the cylinder, so its area comes off twice: \\[ \\begin{aligned} \\text{overlap} &= 3.14 \\times "+r+"^{2} = "+fmt(circ)+" \\\\ SA &= "+triSA2+" + "+fmt(cylSA)+" - 2("+fmt(circ)+") \\\\ &= "+fmt(tot2)+" \\end{aligned} \\] The total surface area is <b>"+fmt(tot2)+" cm\\(^{2}\\)</b>.",
+    {mode:"cyl-on-tri", a:a2, b:b2, c:c2, L:L, r:r, hc:hc});
+}, ["Add the surface areas of the two separate solids first, then deal with the join.", "Find the area of the face where the solids touch, and subtract it twice because it is hidden on both solids."]);
+
+/* Top-up tranche (November 7, 2026): Unit 3 additions from tranche1/unit3-topup.js */
+// Unit 3 top-up: Powers and Exponent Laws (new shapes only)
+
+function u3tMult(factor, count) {
+  var parts = [];
+  for (var i = 0; i < count; i++) parts.push(factor);
+  return "\\(" + parts.join("\\times ") + "\\)";
+}
+function u3tGcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { var t = a % b; a = b; b = t; } return a || 1; }
+function u3tRed(n, d) { var g = u3tGcd(n, d); return [n / g, d / g]; }
+function u3tFracOpt(n, d) {
+  var r = u3tRed(n, d); n = r[0]; d = r[1];
+  if (d === 1) return fmt(n);
+  if (n < 0) return "\\(-\\frac{" + (-n) + "}{" + d + "}\\)";
+  return "\\(\\frac{" + n + "}{" + d + "}\\)";
+}
+function u3tFracInner(n, d) { return "\\frac{" + n + "}{" + d + "}"; }
+var u3tFracs = [[1, 2], [1, 3], [2, 3], [1, 4], [3, 4], [1, 5], [2, 5], [3, 5], [4, 5], [1, 6], [5, 6], [2, 7], [3, 7], [1, 8], [3, 8]];
+var u3tFracsSmall = [[1, 2], [1, 3], [2, 3], [1, 4], [3, 4], [2, 5], [1, 5], [3, 5]];
+
+E("u3-repeated-product-form", 3, ["3.6"], 1, "gen", function () {
+  var mode = pick(["neg", "neg", "frac", "frac", "negfrac"]);
+  var factor, powerInner, altFactor, altFb;
+  var e = ri(2, 4);
+  if (mode === "neg") {
+    var b = ri(2, 9);
+    factor = "(-" + b + ")";
+    powerInner = "(-" + b + ")^{" + e + "}";
+    altFactor = "(" + b + ")";
+    altFb = "That drops the negative sign from each factor. The base is negative.";
+  } else if (mode === "frac") {
+    var f = pick(u3tFracs);
+    factor = "(" + u3tFracInner(f[0], f[1]) + ")";
+    powerInner = "(" + u3tFracInner(f[0], f[1]) + ")^{" + e + "}";
+    altFactor = "(" + u3tFracInner(f[1], f[0]) + ")";
+    altFb = "That swaps the top and bottom of the fraction base.";
+  } else {
+    var f2 = pick(u3tFracsSmall);
+    e = ri(2, 3);
+    factor = "(-" + u3tFracInner(f2[0], f2[1]) + ")";
+    powerInner = "(-" + u3tFracInner(f2[0], f2[1]) + ")^{" + e + "}";
+    altFactor = "(" + u3tFracInner(f2[0], f2[1]) + ")";
+    altFb = "That drops the negative sign from each factor. The base is negative.";
+  }
+  var correct = u3tMult(factor, e);
+  var pool = [
+    { t: u3tMult(factor, e + 1), fb: "That uses one factor too many. Count the exponent." },
+    { t: u3tMult(factor, e - 1), fb: "That uses one factor too few. Count the exponent." },
+    { t: u3tMult(altFactor, e), fb: altFb },
+    { t: "\\(" + factor + "\\times " + e + "\\)", fb: "That multiplies the base by the exponent once. A power repeats the base as a factor." }
+  ];
+  var ds = [], seen = {}; seen[correct] = 1;
+  for (var i = 0; i < pool.length && ds.length < 3; i++) { if (!seen[pool[i].t]) { seen[pool[i].t] = 1; ds.push(pool[i]); } }
+  var stem = pick([
+    "What is \\(" + powerInner + "\\) written as repeated multiplication?",
+    "Which repeated multiplication is equal to \\(" + powerInner + "\\)?",
+    "Express \\(" + powerInner + "\\) as a repeated multiplication. Which choice shows it?"
+  ]);
+  return mcq(stem,
+    { t: correct, fb: "Correct. The whole base, sign and all, repeats as many times as the exponent says." }, ds,
+    "The base is \\(" + factor + "\\) and the exponent is \\(" + e + "\\), so write the base as a factor \\(" + e + "\\) times: \\[ \\begin{aligned} " + powerInner + " &= " + correct.replace("\\(", "").replace("\\)", "") + " \\end{aligned} \\] So the repeated multiplication is <b>" + correct + "</b>.",
+    { mode: "topup-repeated-" + mode, e: e });
+}, ["The exponent tells you how many times the whole base appears as a factor.", "Write the base down exactly as it appears, brackets and sign included, then repeat it."]);
+
+E("u3-power-from-product", 3, ["3.7"], 1, "gen", function () {
+  var mode = pick(["neg", "neg", "frac", "frac", "negfrac"]);
+  var factor, correctInner, ds;
+  if (mode === "neg") {
+    var b = ri(2, 9), c = ri(2, 5);
+    while (b === c) { b = ri(2, 9); }
+    factor = "(-" + b + ")";
+    correctInner = "(-" + b + ")^{" + c + "}";
+    ds = [
+      { t: "\\((-" + c + ")^{" + b + "}\\)", fb: "That swaps the base value and the count of factors." },
+      { t: "\\(" + b + "^{" + c + "}\\)", fb: "That drops the negative sign from the base." },
+      { t: "\\((-" + b + ")^{" + (c + 1) + "}\\)", fb: "That adds one to the exponent. Count the factors shown." }
+    ];
+  } else if (mode === "frac") {
+    var f = pick(u3tFracs), c2 = ri(2, 4);
+    factor = "(" + u3tFracInner(f[0], f[1]) + ")";
+    correctInner = "(" + u3tFracInner(f[0], f[1]) + ")^{" + c2 + "}";
+    ds = [
+      { t: "\\((" + u3tFracInner(f[1], f[0]) + ")^{" + c2 + "}\\)", fb: "That swaps the top and bottom of the fraction base." },
+      { t: "\\((" + u3tFracInner(f[0], f[1]) + ")^{" + (c2 + 1) + "}\\)", fb: "That adds one to the exponent. Count the factors shown." },
+      { t: "\\((" + u3tFracInner(f[0], f[1]) + ")^{" + (c2 - 1) + "}\\)", fb: "That subtracts one from the exponent. Count the factors shown." }
+    ];
+    var cc = c2;
+  } else {
+    var f2 = pick(u3tFracsSmall), c3 = ri(2, 3);
+    factor = "(-" + u3tFracInner(f2[0], f2[1]) + ")";
+    correctInner = "(-" + u3tFracInner(f2[0], f2[1]) + ")^{" + c3 + "}";
+    ds = [
+      { t: "\\((" + u3tFracInner(f2[0], f2[1]) + ")^{" + c3 + "}\\)", fb: "That drops the negative sign from the base." },
+      { t: "\\((-" + u3tFracInner(f2[0], f2[1]) + ")^{" + (c3 + 1) + "}\\)", fb: "That adds one to the exponent. Count the factors shown." },
+      { t: "\\((-" + u3tFracInner(f2[1], f2[0]) + ")^{" + c3 + "}\\)", fb: "That swaps the top and bottom of the fraction base." }
+    ];
+    var cc2 = c3;
+  }
+  var count = (mode === "neg") ? c : (mode === "frac" ? cc : cc2);
+  var shown = u3tMult(factor, count);
+  var stem = pick([
+    "What is " + shown + " written as a single power?",
+    "Which single power is equal to " + shown + "?",
+    "Express " + shown + " as a single power. Which choice shows it?"
+  ]);
+  return mcq(stem,
+    { t: "\\(" + correctInner + "\\)", fb: "Correct. The repeated factor is the base and the count of factors is the exponent." }, ds,
+    "There are \\(" + count + "\\) factors, and each factor is \\(" + factor + "\\), so the power is \\(" + correctInner + "\\). \\[ \\begin{aligned} " + shown.replace("\\(", "").replace("\\)", "") + " &= " + correctInner + " \\end{aligned} \\] So the single power is <b>\\(" + correctInner + "\\)</b>.",
+    { mode: "topup-from-product-" + mode, count: count });
+}, ["Count the factors first. That count becomes the exponent.", "Write the repeated factor exactly as the base, sign included, then use your count as the exponent."]);
+
+E("u3-evaluate-power-neg", 3, ["3.10"], 1, "gen", function () {
+  var mode = pick(["neg", "neg", "one", "negone", "frac"]);
+  var stemVerb = pick(["Evaluate", "What is the value of", "Find the value of"]);
+  if (mode === "frac") {
+    var f = pick([[1, 2], [1, 3], [2, 3], [3, 4], [1, 4], [2, 5], [3, 5], [1, 5], [5, 6], [3, 8]]);
+    var e = ri(2, 3);
+    var vn = Math.pow(f[0], e), vd = Math.pow(f[1], e);
+    var correct = u3tFracOpt(vn, vd);
+    var poolF = [
+      { n: -vn, d: vd, fb: "That has the wrong sign. The base is positive, so the value is positive." },
+      { n: Math.pow(f[0], e), d: f[1], fb: "That raises only the top of the fraction to the power. The bottom is raised too." },
+      { n: f[0], d: Math.pow(f[1], e), fb: "That raises only the bottom of the fraction to the power. The top is raised too." },
+      { n: f[0] * e, d: f[1], fb: "That multiplies the base by the exponent. A power repeats the base as a factor." },
+      { n: vd, d: vn, fb: "That flips the fraction over. Keep the top and bottom in place." }
+    ];
+    var dsF = [], seenF = {}; seenF[u3tRed(vn, vd).join("/")] = 1;
+    for (var i = 0; i < poolF.length && dsF.length < 3; i++) {
+      var key = u3tRed(poolF[i].n, poolF[i].d).join("/");
+      if (!seenF[key]) { seenF[key] = 1; dsF.push({ t: u3tFracOpt(poolF[i].n, poolF[i].d), fb: poolF[i].fb }); }
+    }
+    var shownF = "(" + u3tFracInner(f[0], f[1]) + ")^{" + e + "}";
+    return mcq(stemVerb + " \\(" + shownF + "\\).",
+      { t: correct, fb: "Correct. Both the top and the bottom of the fraction are raised to the power." }, dsF,
+      "Raise the top and the bottom separately: \\[ \\begin{aligned} " + shownF + " &= \\frac{" + f[0] + "^{" + e + "}}{" + f[1] + "^{" + e + "}} \\\\ &= \\frac{" + vn + "}{" + vd + "} \\end{aligned} \\] So the value is <b>" + correct + "</b>.",
+      { mode: "topup-eval-frac", n: f[0], d: f[1], e: e });
+  }
+  var base, e2, val, shown;
+  if (mode === "neg") { var b = ri(2, 9); e2 = ri(2, 5); base = -b; val = Math.pow(-b, e2); shown = "(-" + b + ")^{" + e2 + "}"; }
+  else if (mode === "one") { base = 1; e2 = ri(2, 9); val = 1; shown = "1^{" + e2 + "}"; }
+  else { base = -1; e2 = ri(2, 12); val = (e2 % 2 === 0) ? 1 : -1; shown = "(-1)^{" + e2 + "}"; }
+  var pool = [
+    { v: -val, fb: "That has the opposite sign. Count how many negative factors are multiplied." },
+    { v: base * e2, fb: "That multiplies the base by the exponent. A power repeats the base as a factor." },
+    { v: 0, fb: "That gives zero. A power of a nonzero base is never zero here." },
+    { v: val + base, fb: "That is close, but off. Expand the power as repeated multiplication." },
+    { v: -Math.abs(val), fb: "That forces a negative answer. An even number of negative factors gives a positive product." },
+    { v: Math.abs(val), fb: "That drops the sign. An odd number of negative factors gives a negative product." },
+    { v: base + e2, fb: "That adds the base and exponent. Use repeated multiplication." }
+  ];
+  var ds = [], seen = {}; seen[String(val)] = 1;
+  for (var j = 0; j < pool.length && ds.length < 3; j++) { if (!seen[String(pool[j].v)]) { seen[String(pool[j].v)] = 1; ds.push({ t: fmt(pool[j].v), fb: pool[j].fb }); } }
+  var factors = [];
+  for (var k = 0; k < Math.min(e2, 5); k++) factors.push("(" + base + ")");
+  var expand = (e2 > 5) ? "(" + base + ")\\times (" + base + ")\\times \\cdots \\times (" + base + ")" : factors.join("\\times ");
+  var signNote = (mode === "one") ? "Every factor is 1, so the product stays 1." : ((e2 % 2 === 0) ? "The exponent is even, so the negative factors pair up to a positive product." : "The exponent is odd, so one negative factor is left over and the product is negative.");
+  return mcq(stemVerb + " \\(" + shown + "\\).",
+    { t: fmt(val), fb: "Correct. You expanded the power and handled the sign correctly." }, ds,
+    signNote + " \\[ \\begin{aligned} " + shown + " &= " + expand + " \\\\ &= " + fmt(val) + " \\end{aligned} \\] So the value is <b>" + fmt(val) + "</b>.",
+    { mode: "topup-eval-" + mode, base: base, e: e2 });
+}, ["Expand the power as repeated multiplication first, and watch the sign of each factor.", "Multiply the base by itself, using the exponent as the count, then settle the sign."]);
+
+function u3tGrid(rows, cols) {
+  var sp = 26, pad = 16;
+  var w = (cols - 1) * sp + 2 * pad, h = (rows - 1) * sp + 2 * pad;
+  var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" height="' + h + '" role="img">';
+  for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) {
+    s += '<circle cx="' + (pad + c * sp) + '" cy="' + (pad + r * sp) + '" r="7" fill="#17352a"/>';
+  }
+  return s + '</svg>';
+}
+function u3tLayers(a) {
+  var sp = 26, pad = 16, gap = 24;
+  var gw = (a - 1) * sp;
+  var w = 2 * pad + a * gw + (a - 1) * gap;
+  var h = 2 * pad + gw + 26;
+  var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" height="' + h + '" role="img">';
+  for (var L = 0; L < a; L++) {
+    var x0 = pad + L * (gw + gap);
+    for (var r = 0; r < a; r++) for (var c = 0; c < a; c++) {
+      s += '<circle cx="' + (x0 + c * sp) + '" cy="' + (pad + r * sp) + '" r="7" fill="#17352a"/>';
+    }
+  }
+  s += '<text x="' + (w / 2) + '" y="' + (h - 6) + '" text-anchor="middle" font-size="13" fill="#17352a">' + a + ' layers, each ' + a + ' by ' + a + '</text>';
+  return s + '</svg>';
+}
+function u3tFig(q, fig) { q.figure = fig; return q; }
+function u3tPowOpt(a, e) { return "\\(" + a + "^{" + e + "}\\)"; }
+
+E("u3-power-model-var", 3, ["3.4"], 2, "var", varset([
+  function () {
+    var q = mcq("Dot model convention: a square power is modelled as a grid, with the base as the number of dots along one side and the exponent 2 as the two grid dimensions, rows and columns. Which power does this model show?",
+      { t: u3tPowOpt(3, 2), fb: "Correct. The side has 3 dots and the grid has 2 dimensions." },
+      [
+        { t: u3tPowOpt(2, 3), fb: "That swaps the base and the exponent. The side count is the base." },
+        { t: u3tPowOpt(3, 3), fb: "That uses 3 as the exponent too. A flat grid has 2 dimensions." },
+        { t: u3tPowOpt(3, 1), fb: "That uses exponent 1. A grid is built from two equal dimensions." }
+      ],
+      "Count the dots along one side and count the dimensions: \\[ \\begin{aligned} \\text{side} &= 3 \\text{ dots} \\\\ \\text{dimensions} &= 2 \\end{aligned} \\] The base is the side count, 3, and the exponent is the dimension count, 2. So the model shows <b>\\(3^{2}\\)</b>.",
+      { mode: "model-grid-3" });
+    return u3tFig(q, u3tGrid(3, 3));
+  },
+  function () {
+    var q = mcq("Dot model convention: a square power is modelled as a grid, with the base as the number of dots along one side and the exponent 2 as the two grid dimensions, rows and columns. Which power does this model show?",
+      { t: u3tPowOpt(4, 2), fb: "Correct. The side has 4 dots and the grid has 2 dimensions." },
+      [
+        { t: u3tPowOpt(2, 4), fb: "That swaps the base and the exponent. The side count is the base." },
+        { t: u3tPowOpt(4, 3), fb: "That uses exponent 3, which would need layers. This model is one flat grid." },
+        { t: u3tPowOpt(4, 1), fb: "That uses exponent 1. A grid is built from two equal dimensions." }
+      ],
+      "Count the dots along one side and count the dimensions: \\[ \\begin{aligned} \\text{side} &= 4 \\text{ dots} \\\\ \\text{dimensions} &= 2 \\end{aligned} \\] The base is the side count, 4, and the exponent is the dimension count, 2. So the model shows <b>\\(4^{2}\\)</b>.",
+      { mode: "model-grid-4" });
+    return u3tFig(q, u3tGrid(4, 4));
+  },
+  function () {
+    var q = mcq("Dot model convention: a cube power is modelled as identical square layers drawn side by side, with the base as the side of each layer and the exponent 3 as the number of layers. Which power does this model show?",
+      { t: u3tPowOpt(2, 3), fb: "Correct. Each layer is 2 by 2 and there are 2 layers, giving base 2 with 3 dimensions in all." },
+      [
+        { t: u3tPowOpt(3, 2), fb: "That swaps the base and the exponent. The layer side is the base." },
+        { t: u3tPowOpt(2, 2), fb: "That counts only one flat layer. The layers side by side add the third dimension." },
+        { t: u3tPowOpt(3, 3), fb: "That uses 3 as the base. Each layer here is 2 by 2, not 3 by 3." }
+      ],
+      "Read the base from one layer and the exponent from the full build: \\[ \\begin{aligned} \\text{layer side} &= 2 \\text{ dots} \\\\ \\text{layers} &= 2, \\text{ each } 2 \\text{ by } 2 \\end{aligned} \\] The base is the dots along one side of a layer, 2, and the exponent counts the dimensions, 3 in all. So the model shows <b>\\(2^{3}\\)</b>.",
+      { mode: "model-cube-2" });
+    return u3tFig(q, u3tLayers(2));
+  },
+  function () {
+    var q = mcq("Dot model convention: a cube power is modelled as identical square layers drawn side by side, with the base as the side of each layer and the exponent 3 as the number of layers. Which power does this model show?",
+      { t: u3tPowOpt(3, 3), fb: "Correct. Each layer is 3 by 3 and there are 3 layers." },
+      [
+        { t: u3tPowOpt(3, 2), fb: "That counts only one flat layer. The layers side by side add the third dimension." },
+        { t: u3tPowOpt(2, 3), fb: "That uses 2 as the base. Each layer here is 3 by 3, not 2 by 2." },
+        { t: u3tPowOpt(3, 1), fb: "That uses exponent 1. The build uses three dimensions in all." }
+      ],
+      "Read the base from one layer and the exponent from the full build: \\[ \\begin{aligned} \\text{layer side} &= 3 \\text{ dots} \\\\ \\text{layers} &= 3, \\text{ each } 3 \\text{ by } 3 \\end{aligned} \\] The base is the dots along one side of a layer, 3, and the exponent counts the dimensions, 3 in all. So the model shows <b>\\(3^{3}\\)</b>.",
+      { mode: "model-cube-3" });
+    return u3tFig(q, u3tLayers(3));
+  },
+  function () {
+    var q = mcq("Dot model convention: a square power is modelled as a grid, with the base as the number of dots along one side and the exponent 2 as the two grid dimensions, rows and columns. How many dots are in this model in total?",
+      { t: "16", fb: "Correct. The grid is 4 by 4, and 4 times 4 is 16." },
+      [
+        { t: "8", fb: "That adds the side lengths, 4 plus 4. Multiply them to count the grid." },
+        { t: "4", fb: "That counts one side only. Count every row of the grid." },
+        { t: "12", fb: "That counts 3 rows of 4. The grid has 4 full rows." }
+      ],
+      "The grid has 4 rows with 4 dots in each row: \\[ \\begin{aligned} \\text{total} &= 4\\times 4 \\\\ &= 16 \\end{aligned} \\] The base, 4, is the side count, and the exponent, 2, is the number of dimensions multiplied. So the total is <b>16</b> dots.",
+      { mode: "model-total-grid-4" });
+    return u3tFig(q, u3tGrid(4, 4));
+  },
+  function () {
+    var q = mcq("Dot model convention: a cube power is modelled as identical square layers drawn side by side, with the base as the side of each layer and the exponent 3 as the number of layers. How many dots are in this model in total?",
+      { t: "8", fb: "Correct. There are 2 layers with 4 dots each, and 2 times 4 is 8." },
+      [
+        { t: "6", fb: "That adds 2 and 4. Multiply the dots per layer by the number of layers." },
+        { t: "4", fb: "That counts one layer only. There are 2 layers in the model." },
+        { t: "12", fb: "That counts 3 layers of 4. The model has 2 layers." }
+      ],
+      "Each layer holds 2 by 2 dots and there are 2 layers: \\[ \\begin{aligned} \\text{total} &= 2\\times (2\\times 2) \\\\ &= 8 \\end{aligned} \\] The base, 2, is the side count of one layer, and the exponent, 3, counts the dimensions multiplied. So the total is <b>8</b> dots.",
+      { mode: "model-total-cube-2" });
+    return u3tFig(q, u3tLayers(2));
+  },
+  function () {
+    var q = mcq("A student tries to model \\(3^{2}\\) using the dot model conventions: a square power is a flat grid, and a cube power is identical square layers drawn side by side. The model the student built is shown. Which power does the model actually show?",
+      { t: u3tPowOpt(2, 3), fb: "Correct. The layers make it a cube power with base 2, not a square power with base 3." },
+      [
+        { t: u3tPowOpt(3, 2), fb: "That is the power the student wanted. Read the model itself: it has layers, not one flat grid." },
+        { t: u3tPowOpt(2, 2), fb: "That counts one layer only. The layers side by side add the third dimension." },
+        { t: u3tPowOpt(3, 3), fb: "That uses 3 as the base. Each layer here is 2 by 2, not 3 by 3." }
+      ],
+      "Read the model on its own terms: \\[ \\begin{aligned} \\text{layer side} &= 2 \\text{ dots} \\\\ \\text{layers} &= 2, \\text{ each } 2 \\text{ by } 2 \\end{aligned} \\] The base is the side of one layer, 2, and the exponent is 3 because the build has three dimensions. So the model actually shows <b>\\(2^{3}\\)</b>.",
+      { mode: "model-interchanged-cube" });
+    return u3tFig(q, u3tLayers(2));
+  },
+  function () {
+    var q = mcq("A student tries to model \\(2^{3}\\) using the dot model conventions: a square power is a flat grid, and a cube power is identical square layers drawn side by side. The model the student built is shown. What did the student mix up?",
+      { t: "The base and exponent were swapped: the model shows \\(3^{2}\\), a flat 3 by 3 grid", fb: "Correct. A flat grid with side 3 is the square power 3 squared." },
+      [
+        { t: "The dots were counted wrongly: the model shows \\(2^{3}\\) with 9 dots in each layer", fb: "That keeps the wanted power. The model is one flat grid, and each side has 3 dots." },
+        { t: "One layer is missing: adding a layer to this grid would complete the model of \\(2^{3}\\)", fb: "That treats the grid as a layer of the cube. Its side is 3, so it cannot be a layer of a power with base 2." },
+        { t: "The model is correct as built: a flat 3 by 3 grid is the standard model of \\(2^{3}\\)", fb: "That accepts the swap. A cube power needs layers, and this grid has side 3, not 2." }
+      ],
+      "Read the model on its own terms: \\[ \\begin{aligned} \\text{grid side} &= 3 \\text{ dots} \\\\ \\text{layers} &= 1 \\text{ flat grid} \\end{aligned} \\] The base is the side count, 3, and a flat grid has exponent 2, so the model shows \\(3^{2}\\). The student swapped the base and the exponent. So the correct statement is <b>The base and exponent were swapped: the model shows \\(3^{2}\\), a flat 3 by 3 grid</b>.",
+      { mode: "model-interchanged-grid" });
+    return u3tFig(q, u3tGrid(3, 3));
+  }
+]), ["Read the base from the dots along one side or one layer first.", "Count the dimensions next: a flat grid has two, a layered build has three."]);
+
+E("u3-zero-pattern", 3, ["3.9"], 2, "gen", function () {
+  var mode = pick(["int", "int", "frac", "neg"]);
+  var lines = [], baseTxt, lastStep, baseOpt, recipOpt;
+  if (mode === "int") {
+    var a = ri(2, 9), s = pick([3, 4, 5]);
+    for (var k = s; k >= 1; k--) lines.push("\\(" + a + "^{" + k + "}=" + fmt(Math.pow(a, k)) + "\\)");
+    baseTxt = a + "";
+    lastStep = a + "^{1}\\div " + a + " &= " + a + "\\div " + a + " \\\\ &= 1";
+    baseOpt = fmt(a);
+    recipOpt = "\\(\\frac{1}{" + a + "}\\)";
+  } else if (mode === "neg") {
+    var a2 = ri(2, 6), s2 = pick([3, 4, 5]);
+    for (var k2 = s2; k2 >= 1; k2--) lines.push("\\((-" + a2 + ")^{" + k2 + "}=" + fmt(Math.pow(-a2, k2)) + "\\)");
+    baseTxt = "(-" + a2 + ")";
+    lastStep = "(-" + a2 + ")^{1}\\div (-" + a2 + ") &= (-" + a2 + ")\\div (-" + a2 + ") \\\\ &= 1";
+    baseOpt = fmt(-a2);
+    recipOpt = "\\(-\\frac{1}{" + a2 + "}\\)";
+  } else {
+    var f = pick([[1, 2], [1, 3], [2, 3], [1, 4], [3, 4], [2, 5], [3, 5], [1, 5], [1, 6], [5, 6]]);
+    var s3 = pick([3, 4]);
+    for (var k3 = s3; k3 >= 1; k3--) lines.push("\\((" + u3tFracInner(f[0], f[1]) + ")^{" + k3 + "}=" + u3tFracInner(Math.pow(f[0], k3), Math.pow(f[1], k3)) + "\\)");
+    baseTxt = "(" + u3tFracInner(f[0], f[1]) + ")";
+    lastStep = "(" + u3tFracInner(f[0], f[1]) + ")^{1}\\div (" + u3tFracInner(f[0], f[1]) + ") &= " + u3tFracInner(f[0], f[1]) + "\\div " + u3tFracInner(f[0], f[1]) + " \\\\ &= 1";
+    baseOpt = u3tFracOpt(f[0], f[1]);
+    recipOpt = u3tFracOpt(f[1], f[0]);
+  }
+  var prompt = pick([
+    "A pattern for the base \\(" + baseTxt + "\\) is shown. Each step down divides by the base.<br>" + lines.join("<br>") + "<br>What is the value of \\(" + baseTxt + "^{0}\\) that continues the pattern?",
+    "The powers of \\(" + baseTxt + "\\) below follow a pattern, and each value is the one above it divided by the base.<br>" + lines.join("<br>") + "<br>Following the pattern one more step, what is \\(" + baseTxt + "^{0}\\)?",
+    "Read the pattern for the base \\(" + baseTxt + "\\) from the top down. Every step divides by the base.<br>" + lines.join("<br>") + "<br>What value does the pattern give for \\(" + baseTxt + "^{0}\\)?"
+  ]);
+  return mcq(prompt,
+    { t: "1", fb: "Correct. Dividing the first power value by the base one more time gives one." },
+    [
+      { t: "0", fb: "That treats the zero exponent as giving zero. Follow the division pattern down one more step." },
+      { t: baseOpt, fb: "That is the base itself, the value of the first power. Divide it by the base once more." },
+      { t: recipOpt, fb: "That divides once too often, or divides the wrong way. One division from the first power value gives one." }
+    ],
+    "Each step down divides by the base, so continue from the first power: \\[ \\begin{aligned} " + lastStep + " \\end{aligned} \\] So the value that continues the pattern is <b>1</b>.",
+    { mode: "topup-zero-" + mode });
+}, ["Watch what happens to the value each time the exponent drops by one.", "Take the value of the first power and divide it by the base."]);
+
+E("u3-paren-powers-set", 3, ["3.8"], 2, "gen", function () {
+  var b = ri(2, 5), e = ri(2, 4);
+  var forms = [
+    { txt: "(-" + b + ")^{" + e + "}", val: Math.pow(-b, e) },
+    { txt: "(-" + b + "^{" + e + "})", val: -Math.pow(b, e) },
+    { txt: "-" + b + "^{" + e + "}", val: -Math.pow(b, e) }
+  ];
+  var order = shuffle([0, 1, 2]);
+  var shownForms = order.map(function (i) { return forms[i]; });
+  var listTxt = shownForms.map(function (f, i) { return "Form " + (i + 1) + ": \\(" + f.txt + "\\)"; }).join("<br>");
+  var mode = (e % 2 === 0 && Math.random() < 0.45) ? "pair" : "triple";
+  if (mode === "pair") {
+    function pairTxt(i, j) { return "\\(" + shownForms[i].txt + "\\) and \\(" + shownForms[j].txt + "\\)"; }
+    var eqPair = null;
+    for (var i = 0; i < 3; i++) for (var j = i + 1; j < 3; j++) { if (shownForms[i].val === shownForms[j].val) eqPair = [i, j]; }
+    var pairs = [[0, 1], [0, 2], [1, 2]];
+    var dsP = pairs.filter(function (p) { return !(p[0] === eqPair[0] && p[1] === eqPair[1]); }).map(function (p) {
+      return { t: pairTxt(p[0], p[1]), fb: "Those two forms have different values. Check which forms keep the negative sign outside the power." };
+    });
+    dsP.push({ t: "All three forms have the same value", fb: "That is not so here. The bracketed form has a different value from the other two." });
+    return mcq("Three forms are shown.<br>" + listTxt + "<br>Which two forms have the same value?",
+      { t: pairTxt(eqPair[0], eqPair[1]), fb: "Correct. In both forms the power is worked out first and the negative sign stays outside." }, dsP,
+      "Work out each form: \\[ \\begin{aligned} " + shownForms.map(function (f) { return f.txt + " &= " + fmt(f.val); }).join(" \\\\ ") + " \\end{aligned} \\] The two forms with the same value are <b>" + pairTxt(eqPair[0], eqPair[1]) + "</b>.",
+      { mode: "topup-paren-pair", b: b, e: e });
+  }
+  var vals = shownForms.map(function (f) { return f.val; });
+  function trip(v) { return "\\(" + v.map(function (x) { return fmt(x); }).join(", ") + "\\)"; }
+  var poolT = [
+    { v: [-vals[0], vals[1], vals[2]], fb: "That changes the sign of the first form. Check what its brackets cover." },
+    { v: [vals[0], -vals[1], vals[2]], fb: "That changes the sign of the second form. Check where its negative sign sits." },
+    { v: [vals[0], vals[1], -vals[2]], fb: "That changes the sign of the third form. Check where its negative sign sits." },
+    { v: [-vals[0], -vals[1], -vals[2]], fb: "That changes every sign. Work out the bracketed form on its own first." },
+    { v: [Math.abs(vals[0]), Math.abs(vals[1]), Math.abs(vals[2])], fb: "That drops every negative sign. Some forms keep a negative value." },
+    { v: [vals[1], vals[0], vals[2]], fb: "That swaps the first two values. Keep the values in the order the forms are shown." }
+  ];
+  var dsT = [], seenT = {}; seenT[trip(vals)] = 1;
+  for (var t = 0; t < poolT.length && dsT.length < 3; t++) { var tt = trip(poolT[t].v); if (!seenT[tt]) { seenT[tt] = 1; dsT.push({ t: tt, fb: poolT[t].fb }); } }
+  return mcq("Three forms are shown.<br>" + listTxt + "<br>What are the values of the three forms, in the order shown?",
+    { t: trip(vals), fb: "Correct. You checked what the brackets cover in each form." }, dsT,
+    "Work out each form in turn: \\[ \\begin{aligned} " + shownForms.map(function (f) { return f.txt + " &= " + fmt(f.val); }).join(" \\\\ ") + " \\end{aligned} \\] In the bracketed form the negative value is the base. In the other two forms the power is worked out first and the negative sign stays outside. So the values, in order, are <b>" + trip(vals) + "</b>.",
+    { mode: "topup-paren-triple", b: b, e: e });
+}, ["Look at each form on its own and settle what its base is.", "Work out the first form by expanding it, then do the same for the other two."]);
+
+E("u3-two-laws-context", 3, ["3.12"], 2, "gen", function () {
+  var fam = pick(["prodquot", "powprod"]);
+  if (fam === "prodquot") {
+    var a = ri(2, 5), m = ri(2, 3), n = ri(2, 3), p = ri(1, 2);
+    var tot = m + n - p, val = Math.pow(a, tot);
+    var ctx = pick([
+      "A rectangular garden bed is \\(" + a + "^{" + m + "}\\) metres long and \\(" + a + "^{" + n + "}\\) metres wide. Its area is the product of the two lengths. The bed is shared equally among \\(" + a + "^{" + p + "}\\) gardeners. How many square metres does each gardener get?",
+      "A floor section uses \\(" + a + "^{" + m + "}\\) tiles in each row and has \\(" + a + "^{" + n + "}\\) rows in total. All of the tiles are packed equally into \\(" + a + "^{" + p + "}\\) boxes. How many tiles are in each box?",
+      "A print shop makes \\(" + a + "^{" + m + "}\\) cards on each sheet and prints \\(" + a + "^{" + n + "}\\) sheets. The cards are bundled equally into \\(" + a + "^{" + p + "}\\) packs. How many cards are in each pack?"
+    ]);
+    return numq(ctx, val, 0,
+      "Multiply first with the product law, then divide with the quotient law: \\[ \\begin{aligned} " + a + "^{" + m + "}\\times " + a + "^{" + n + "} &= " + a + "^{" + (m + n) + "} \\\\ " + a + "^{" + (m + n) + "}\\div " + a + "^{" + p + "} &= " + a + "^{" + tot + "} \\\\ &= " + fmt(val) + " \\end{aligned} \\] So the answer is <b>" + fmt(val) + "</b>.",
+      { mode: "topup-context-prodquot", a: a, m: m, n: n, p: p });
+  }
+  var a2 = ri(2, 4), m2 = ri(2, 3), p2 = ri(1, 3);
+  var tot2 = 2 * m2 + p2, val2 = Math.pow(a2, tot2);
+  if (val2 > 90000) { p2 = 1; tot2 = 2 * m2 + p2; val2 = Math.pow(a2, tot2); }
+  var ctx2 = pick([
+    "Each square planter has sides of \\(" + a2 + "^{" + m2 + "}\\) metres, so the area of one planter is the square of its side. A park has \\(" + a2 + "^{" + p2 + "}\\) identical planters. What is the total area of all the planters, in square metres?",
+    "Each square sticker has sides of \\(" + a2 + "^{" + m2 + "}\\) centimetres, so the area of one sticker is the square of its side. A sheet holds \\(" + a2 + "^{" + p2 + "}\\) identical stickers. What is the total area of all the stickers, in square centimetres?",
+    "Each square garden plot has sides of \\(" + a2 + "^{" + m2 + "}\\) metres, so the area of one plot is the square of its side. A school has \\(" + a2 + "^{" + p2 + "}\\) identical plots. What is the total area of all the plots, in square metres?"
+  ]);
+  return numq(ctx2, val2, 0,
+    "Square the side with the power of a power law, then multiply with the product law: \\[ \\begin{aligned} (" + a2 + "^{" + m2 + "})^{2} &= " + a2 + "^{" + (2 * m2) + "} \\\\ " + a2 + "^{" + (2 * m2) + "}\\times " + a2 + "^{" + p2 + "} &= " + a2 + "^{" + tot2 + "} \\\\ &= " + fmt(val2) + " \\end{aligned} \\] So the answer is <b>" + fmt(val2) + "</b>.",
+    { mode: "topup-context-powprod", a: a2, m: m2, p: p2 });
+}, ["Turn the context into powers of one base first, then choose the laws.", "Write the total as a product or quotient of powers before you evaluate anything."]);
+
+E("u3-laws-mixed-eval", 3, ["3.12"], 3, "gen", function () {
+  var tuples = [];
+  var A, B, N, P, Q, val;
+  for (A = 2; A <= 4; A++) for (B = 2; B <= 4; B++) for (N = 2; N <= 3; N++) for (P = 1; P <= N; P++) for (Q = 1; Q <= N; Q++) {
+    val = Math.pow(A, N - P) * Math.pow(B, N - Q);
+    if (val > 1 && val < 100000) tuples.push({ kind: "prodquot", a: A, b: B, n: N, p: P, q: Q, val: val });
+  }
+  for (B = 2; B <= 4; B++) for (var C = 2; C <= 4; C++) for (N = 2; N <= 3; N++) for (P = 1; P < N; P++) {
+    var big = B * C;
+    val = Math.pow(big, N - P);
+    if (val > 1 && val < 100000) tuples.push({ kind: "quotprod", big: big, b: B, c: C, n: N, p: P, val: val });
+  }
+  for (A = 2; A <= 4; A++) for (B = 2; B <= 3; B++) for (P = 2; P <= 3; P++) {
+    val = Math.pow(A * B, 4 - P);
+    if (val > 1 && val < 100000) tuples.push({ kind: "powpow", a: A, b: B, p: P, val: val });
+  }
+  var t = pick(tuples);
+  if (t.kind === "prodquot") {
+    var expr = "\\frac{(" + t.a + "\\times " + t.b + ")^{" + t.n + "}}{" + t.a + "^{" + t.p + "}\\times " + t.b + "^{" + t.q + "}}";
+    return numq("Evaluate \\(" + expr + "\\).", t.val, 0,
+      "Start with the power of a product, then use the quotient law on each base: \\[ \\begin{aligned} " + expr + " &= \\frac{" + t.a + "^{" + t.n + "}\\times " + t.b + "^{" + t.n + "}}{" + t.a + "^{" + t.p + "}\\times " + t.b + "^{" + t.q + "}} \\\\ &= " + t.a + "^{" + (t.n - t.p) + "}\\times " + t.b + "^{" + (t.n - t.q) + "} \\\\ &= " + fmt(t.val) + " \\end{aligned} \\] So the value is <b>" + fmt(t.val) + "</b>.",
+      { mode: "topup-mixed-prodquot", a: t.a, b: t.b, n: t.n, p: t.p, q: t.q });
+  }
+  if (t.kind === "quotprod") {
+    var expr2 = "\\frac{(" + t.big + "\\div " + t.b + ")^{" + t.n + "}\\times " + t.b + "^{" + t.n + "}}{" + t.big + "^{" + t.p + "}}";
+    return numq("Evaluate \\(" + expr2 + "\\).", t.val, 0,
+      "Start with the power of a quotient, then tidy up with the product and quotient laws: \\[ \\begin{aligned} " + expr2 + " &= \\frac{" + t.big + "^{" + t.n + "}}{" + t.big + "^{" + t.p + "}} \\\\ &= " + t.big + "^{" + (t.n - t.p) + "} \\\\ &= " + fmt(t.val) + " \\end{aligned} \\] So the value is <b>" + fmt(t.val) + "</b>.",
+      { mode: "topup-mixed-quotprod", big: t.big, b: t.b, n: t.n, p: t.p });
+  }
+  var expr3 = "\\frac{((" + t.a + "\\times " + t.b + ")^{2})^{2}}{(" + t.a + "\\times " + t.b + ")^{" + t.p + "}}";
+  return numq("Evaluate \\(" + expr3 + "\\).", t.val, 0,
+    "Start with the power of a power on the product base, then use the quotient law: \\[ \\begin{aligned} " + expr3 + " &= \\frac{(" + t.a + "\\times " + t.b + ")^{4}}{(" + t.a + "\\times " + t.b + ")^{" + t.p + "}} \\\\ &= (" + t.a + "\\times " + t.b + ")^{" + (4 - t.p) + "} \\\\ &= " + fmt(t.val) + " \\end{aligned} \\] So the value is <b>" + fmt(t.val) + "</b>.",
+    { mode: "topup-mixed-powpow", a: t.a, b: t.b, p: t.p });
+}, ["Sort the expression into steps: one law at a time, starting inside the brackets.", "Apply the power of a product or power of a quotient law first, then combine what is left."]);
+
+E("u3-error-two-laws", 3, ["3.15"], 3, "gen", function () {
+  var fam = pick(["prod", "quot"]);
+  var a = ri(2, 6), m = ri(2, 4), n = ri(2, 3), p = ri(2, 4);
+  if (m === 2 && n === 2) n = 3;
+  var err = ri(1, 2);
+  var e1ok = m * n;
+  var e1 = (err === 1) ? (m + n) : e1ok;
+  var ec, e2, opSym, errNote;
+  if (fam === "prod") {
+    ec = e1ok + p;
+    e2 = (err === 1) ? (e1 + p) : (e1ok * p);
+    opSym = "\\times ";
+    errNote = (err === 1)
+      ? "In Step 1 the exponents were added, but a power of a power multiplies the exponents."
+      : "In Step 2 the exponents were multiplied, but the product law adds the exponents.";
+  } else {
+    if (p >= e1ok) p = e1ok - 1;
+    if (err === 1 && p >= e1) p = Math.max(1, e1 - 1);
+    ec = e1ok - p;
+    e2 = (err === 1) ? (e1 - p) : (e1ok + p);
+    opSym = "\\div ";
+    errNote = (err === 1)
+      ? "In Step 1 the exponents were added, but a power of a power multiplies the exponents."
+      : "In Step 2 the exponents were added, but the quotient law subtracts the exponents.";
+  }
+  var expr = "((" + a + "^{" + m + "})^{" + n + "}" + opSym + a + "^{" + p + "})";
+  var prompt = "A student simplifies \\(" + expr + "\\) in two steps. The working contains one error.<br>Step 1: \\((" + a + "^{" + m + "})^{" + n + "} = " + a + "^{" + e1 + "}\\)<br>Step 2: \\(" + a + "^{" + e1 + "}" + opSym + a + "^{" + p + "} = " + a + "^{" + e2 + "}\\)<br>What is the correct simplified result, as a single power?";
+  var pool = [
+    { v: e2, fb: "That is the result in the shown working, which contains the error." },
+    { v: (fam === "prod") ? (e1ok - p) : (e1ok + p), fb: "That uses the wrong law in the second step. Check whether the expression multiplies or divides." },
+    { v: m + n + p, fb: "That adds every exponent. A power of a power multiplies its exponents." },
+    { v: ec + 1, fb: "That is one too large. Redo both law steps carefully." },
+    { v: ec - 1, fb: "That is one too small. Redo both law steps carefully." },
+    { v: e1ok, fb: "That stops after the first step. The second law still has to be applied." }
+  ];
+  var ds = [], seen = {}; seen[String(ec)] = 1;
+  for (var i = 0; i < pool.length && ds.length < 3; i++) {
+    if (pool[i].v > 0 && !seen[String(pool[i].v)]) { seen[String(pool[i].v)] = 1; ds.push({ t: "\\(" + a + "^{" + pool[i].v + "}\\)", fb: pool[i].fb }); }
+  }
+  var step2ok = a + "^{" + e1ok + "}" + opSym + a + "^{" + p + "} &= " + a + "^{" + ec + "}";
+  return mcq(prompt,
+    { t: "\\(" + a + "^{" + ec + "}\\)", fb: "Correct. You redid both law steps and fixed the misapplied law." }, ds,
+    errNote + " The correct working is \\[ \\begin{aligned} ((" + a + "^{" + m + "})^{" + n + "} &= " + a + "^{" + e1ok + "} \\\\ " + step2ok + " \\end{aligned} \\] So the correct simplified result is <b>\\(" + a + "^{" + ec + "}\\)</b>.",
+    { mode: "topup-error-" + fam + "-" + err, a: a, m: m, n: n, p: p });
+}, ["Redo the simplification yourself, one law at a time, before you look at the choices.", "Start with the power of a power, then apply the second law to your own result."]);
+
+/* Top-up tranche (November 7, 2026): Unit 4 additions from tranche1/unit4-topup.js */
+function u4tTiles(a,b,c){
+  var groups=[];
+  if(a!==0)groups.push({n:a,kind:0,w:34,h:34,lab:(a<0?"-":"")+"x²",fs:11});
+  if(b!==0)groups.push({n:b,kind:1,w:34,h:12,lab:(b<0?"-":"")+"x",fs:9});
+  if(c!==0)groups.push({n:c,kind:2,w:12,h:12,lab:(c<0?"-":"")+"1",fs:8});
+  if(!groups.length)groups.push({n:1,kind:2,w:12,h:12,lab:"0",fs:8});
+  var pad=10,gapX=4,gapY=8,maxRow=0,totH=0,i,j;
+  for(i=0;i<groups.length;i++){var rw=Math.abs(groups[i].n)*groups[i].w+(Math.abs(groups[i].n)-1)*gapX;if(rw>maxRow)maxRow=rw;totH+=groups[i].h;if(i>0)totH+=gapY;}
+  var W=maxRow+2*pad;if(W<90)W=90;
+  var H=totH+2*pad;
+  var s='<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Algebra tile model">';
+  s+='<rect x="1" y="1" width="'+(W-2)+'" height="'+(H-2)+'" fill="#ffffff" stroke="'+FIG_INK+'" stroke-width="1"/>';
+  var y=pad;
+  for(i=0;i<groups.length;i++){
+    var g=groups[i],x=pad,count=Math.abs(g.n);
+    for(j=0;j<count;j++){
+      var pos=g.n>0;
+      var fill=pos?(g.kind===1?FIG_ACC:FIG_SHADE):"#ffffff";
+      var tf=(pos&&g.kind===1)?"#ffffff":FIG_INK;
+      s+='<rect x="'+x+'" y="'+y+'" width="'+g.w+'" height="'+g.h+'" fill="'+fill+'" stroke="'+FIG_INK+'" stroke-width="1.5"/>';
+      s+='<text x="'+fmt(x+g.w/2,1)+'" y="'+fmt(y+g.h/2,1)+'" font-size="'+g.fs+'" fill="'+tf+'" text-anchor="middle" dominant-baseline="central">'+g.lab+'</text>';
+      x+=g.w+gapX;
+    }
+    y+=g.h+gapY;
+  }
+  return s+'</svg>';
+}
+function u4tArea(m,p,c){
+  var monoLab=fmt(m)+"x";
+  var part1=p===1?"x":fmt(p)+"x";
+  var part2=fmt(c);
+  var W=300,H=146,rx=56,ry=34,rw=216,rh=76,sw=128,sx=rx+sw;
+  var totalLab="("+part1+(c<0?" - "+fmt(Math.abs(c)):" + "+part2)+")";
+  var s='<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Rectangle split into two regions for an area model">';
+  s+='<rect x="'+rx+'" y="'+ry+'" width="'+sw+'" height="'+rh+'" fill="'+FIG_SHADE+'" stroke="'+FIG_INK+'" stroke-width="2"/>';
+  s+='<rect x="'+sx+'" y="'+ry+'" width="'+(rw-sw)+'" height="'+rh+'" fill="#ffffff" stroke="'+FIG_INK+'" stroke-width="2"/>';
+  s+='<line x1="'+sx+'" y1="'+ry+'" x2="'+sx+'" y2="'+(ry+rh)+'" stroke="'+FIG_INK+'" stroke-width="2"/>';
+  s+='<text x="30" y="'+fmt(ry+rh/2,1)+'" font-size="13" fill="'+FIG_INK+'" text-anchor="middle" dominant-baseline="central">'+monoLab+'</text>';
+  s+='<text x="'+fmt(rx+sw/2,1)+'" y="'+(ry+16)+'" font-size="13" fill="'+FIG_INK+'" text-anchor="middle" dominant-baseline="central">'+part1+'</text>';
+  s+='<text x="'+fmt(sx+(rw-sw)/2,1)+'" y="'+(ry+16)+'" font-size="13" fill="'+FIG_INK+'" text-anchor="middle" dominant-baseline="central">'+part2+'</text>';
+  s+='<text x="'+fmt(rx+rw/2,1)+'" y="'+(ry+rh+22)+'" font-size="13" fill="'+FIG_INK+'" text-anchor="middle" dominant-baseline="central">'+totalLab+'</text>';
+  return s+'</svg>';
+}
+
+E("u4-tiles-figure-expr", 4, ["8.16"], 2, "gen", function(){
+  for(var att=0;att<300;att++){
+    var a=ri(-3,3),b=ri(-5,5),c=ri(-5,5);
+    var nz=(a!==0?1:0)+(b!==0?1:0)+(c!==0?1:0);
+    if(nz<2)continue;
+    var hasPos=(a>0||b>0||c>0),hasNeg=(a<0||b<0||c<0);
+    if(!hasPos||!hasNeg)continue;
+    var corr=u4m(a,b,c);
+    var aOff=a===0?1:(a>0?a+1:a-1),cOff=c===0?-1:(c>0?c+1:c-1);
+    var cands=[
+      {t:u4m(a,-b,c),fb:"The x tiles have the opposite sign in the model."},
+      {t:u4m(a,b,-c),fb:"The unit tiles have the opposite sign in the model."},
+      {t:u4m(-a,b,c),fb:"The x squared tiles have the opposite sign in the model."},
+      {t:u4m(b,a,c),fb:"That swaps the x squared count with the x count."},
+      {t:u4m(aOff,b,c),fb:"That miscounts the x squared tiles in the model."},
+      {t:u4m(a,b,cOff),fb:"That miscounts the unit tiles in the model."}
+    ];
+    var ds=u4pick3(corr,cands);
+    if(ds.length<3)continue;
+    var sol="Count each kind of tile in the picture, keeping its sign: \\[ \\begin{aligned} x^{2} \\text{ tiles} &= "+fmt(a)+" \\\\ x \\text{ tiles} &= "+fmt(b)+" \\\\ \\text{unit tiles} &= "+fmt(c)+" \\end{aligned} \\] So the model shows <b>"+corr+"</b>.";
+    var q=mcq("In the tile model in the diagram, a large square is an \\(x^{2}\\) tile, a long thin rectangle is an \\(x\\) tile and a small square is a unit tile. Positive tiles are filled and negative tiles are outlined only, with a minus sign on each one. Which expression does the model show?",{t:corr,fb:"Correct: each tile count in the picture becomes the matching term."},ds,sol,{mode:"tiles-fig-expr",a:a,b:b,c:c});
+    q.figure=u4tTiles(a,b,c);
+    return q;
+  }
+  var qf=mcq("In the tile model in the diagram, a large square is an \\(x^{2}\\) tile, a long thin rectangle is an \\(x\\) tile and a small square is a unit tile. Positive tiles are filled and negative tiles are outlined only, with a minus sign on each one. Which expression does the model show?",{t:u4m(2,-3,1),fb:"Correct: each tile count in the picture becomes the matching term."},[{t:u4m(2,3,1),fb:"The x tiles have the opposite sign in the model."},{t:u4m(2,-3,-1),fb:"The unit tiles have the opposite sign in the model."},{t:u4m(-3,2,1),fb:"That swaps the x squared count with the x count."}],"Counting the tiles with their signs gives <b>"+u4m(2,-3,1)+"</b>.",{mode:"tiles-fig-expr",a:2,b:-3,c:1});
+  qf.figure=u4tTiles(2,-3,1);
+  return qf;
+}, ["Read the picture tile by tile: count each kind and keep the sign shown on the tiles.", "First count the large squares: that count, with its sign, is the x squared coefficient."]);
+
+E("u4-tiles-figure-build", 4, ["8.15"], 2, "gen", function(){
+  function kindName(k){return k===0?"x squared":(k===1?"x":"unit");}
+  function kindTex(k){return k===0?"x^{2}":(k===1?"x":"\\text{unit}");}
+  function tileWord(n){return n===1?"tile":"tiles";}
+  function makeAction(verb,count,sign,k){return verb+" "+fmt(count)+" "+sign+" "+kindName(k)+" "+tileWord(count);}
+  for(var att=0;att<300;att++){
+    var prime=[ri(-3,3),ri(-5,5),ri(-5,5)];
+    var nzP=(prime[0]!==0?1:0)+(prime[1]!==0?1:0)+(prime[2]!==0?1:0);
+    if(nzP<2)continue;
+    var k=ri(0,2),delta=pick([-2,-1,1,2]);
+    var from=prime[k],to=from+delta;
+    var lim=k===0?3:5;
+    if(Math.abs(to)>lim)continue;
+    if(!(from===0||to===0||(from>0)===(to>0)))continue;
+    var target=prime.slice();target[k]=to;
+    var nzT=(target[0]!==0?1:0)+(target[1]!==0?1:0)+(target[2]!==0?1:0);
+    if(nzT<2)continue;
+    var verb,sign;
+    if(delta>0&&from>=0){verb="Add";sign="positive";}
+    else if(delta>0){verb="Remove";sign="negative";}
+    else if(to>=0){verb="Remove";sign="positive";}
+    else{verb="Add";sign="negative";}
+    var count=Math.abs(delta);
+    var corr=makeAction(verb,count,sign,k);
+    var otherKind=k===0?1:(k===1?2:0);
+    var cands=[
+      {t:makeAction(verb==="Add"?"Remove":"Add",count,sign,k),fb:"That moves the "+kindName(k)+" count the wrong way; compare the two coefficients."},
+      {t:makeAction(verb,count,sign==="positive"?"negative":"positive",k),fb:"That uses tiles of the wrong sign; the needed change keeps the sign shown by the coefficients."},
+      {t:makeAction(verb,count+1,sign,k),fb:"That changes the right kind of tile by the wrong amount; the coefficients differ by "+fmt(count)+"."},
+      {t:makeAction(verb,count,sign,otherKind),fb:"That changes the "+kindName(otherKind)+" tiles; only the "+kindName(k)+" coefficient changes."}
+    ];
+    var ds=u4pick3(corr,cands);
+    if(ds.length<3)continue;
+    var sol="Compare the "+kindName(k)+" coefficients: \\[ \\begin{aligned} "+kindTex(k)+" \\text{ in the model} &= "+fmt(from)+" \\\\ "+kindTex(k)+" \\text{ needed} &= "+fmt(to)+" \\end{aligned} \\] The other coefficients already match, so the change is to <b>"+corr+"</b>.";
+    var q=mcq("The diagram shows an algebra tile model of "+u4m(prime[0],prime[1],prime[2])+". What must be done to change this model into a model of "+u4m(target[0],target[1],target[2])+"? In the model, a large square is an \\(x^{2}\\) tile, a long thin rectangle is an \\(x\\) tile and a small square is a unit tile; positive tiles are filled and negative tiles are outlined only, with a minus sign on each one.",{t:corr,fb:"Correct: only that one coefficient changes, by exactly that edit."},ds,sol,{mode:"tiles-fig-build",a:prime[0],b:prime[1],c:prime[2],ta:target[0],tb:target[1],tc:target[2],k:k});
+    q.figure=u4tTiles(prime[0],prime[1],prime[2]);
+    return q;
+  }
+  var qf=mcq("The diagram shows an algebra tile model of "+u4m(1,1,2)+". What must be done to change this model into a model of "+u4m(1,3,2)+"? In the model, a large square is an \\(x^{2}\\) tile, a long thin rectangle is an \\(x\\) tile and a small square is a unit tile; positive tiles are filled and negative tiles are outlined only, with a minus sign on each one.",{t:"Add 2 positive x tiles",fb:"Correct: only that one coefficient changes, by exactly that edit."},[{t:"Remove 2 positive x tiles",fb:"That moves the x count the wrong way."},{t:"Add 2 negative x tiles",fb:"That uses tiles of the wrong sign."},{t:"Add 2 positive unit tiles",fb:"That changes the unit tiles; only the x coefficient changes."}],"The x coefficient rises from 1 to 3, so the change is to <b>Add 2 positive x tiles</b>.",{mode:"tiles-fig-build",a:1,b:1,c:2,ta:1,tb:3,tc:2,k:1});
+  qf.figure=u4tTiles(1,1,2);
+  return qf;
+}, ["Compare the model expression with the target expression one coefficient at a time and find the one that differs.", "First compare the x squared coefficients, then the x coefficients, then the constants, until you find the single difference."]);
+
+E("u4-match-equivalent", 4, ["8.4"], 2, "gen", function(){
+  for(var att=0;att<300;att++){
+    var a=u4nz(-4,4),b=u4nz(-5,5),c=u4nz(-6,6);
+    var feas=[];
+    if(Math.abs(a)>=2)feas.push(0);
+    if(Math.abs(b)>=2)feas.push(1);
+    if(Math.abs(c)>=2)feas.push(2);
+    if(!feas.length)continue;
+    var sk=pick(feas);
+    var corrPlain,splitNote;
+    if(sk===0){var a1=a>0?1:-1,a2=a-a1;corrPlain=u4expr([[a1,"x^{2}"],[b,"x"],[a2,"x^{2}"],[c,""]]);splitNote=u4expr([[a1,""],[a2,""]])+"="+fmt(a);}
+    else if(sk===1){var b1=b>0?1:-1,b2=b-b1;corrPlain=u4expr([[a,"x^{2}"],[b1,"x"],[c,""],[b2,"x"]]);splitNote=u4expr([[b1,""],[b2,""]])+"="+fmt(b);}
+    else{var c1=c>0?1:-1,c2=c-c1;corrPlain=u4expr([[a,"x^{2}"],[c1,""],[b,"x"],[c2,""]]);splitNote=u4expr([[c1,""],[c2,""]])+"="+fmt(c);}
+    var corr="\\("+corrPlain+"\\)";
+    var orders=[[[c,""],[a,"x^{2}"],[b,"x"]],[[b,"x"],[c,""],[a,"x^{2}"]],[[c,""],[b,"x"],[a,"x^{2}"]]];
+    var targetPlain=u4expr(pick(orders));
+    var aOff=a>0?a+1:a-1;
+    var cands=[
+      {t:u4m(a,-b,c),fb:"The x coefficient has the wrong sign; equivalent forms keep every coefficient."},
+      {t:u4m(aOff,b,c),fb:"The x squared coefficient is off by one; equivalent forms keep every coefficient."},
+      {t:u4m(a,b,-c),fb:"The constant has the wrong sign; equivalent forms keep every coefficient."},
+      {t:u4m(a+b,0,c),fb:"That folds the x coefficient into the x squared term, but those are unlike terms."}
+    ];
+    var ds=u4pick3(corr,cands);
+    if(ds.length<3)continue;
+    var sol="Write the target in the usual order, and combine the split part of the matching form (\\("+splitNote+"\\)): \\[ \\begin{aligned} \\text{target} &= "+u4p(a,b,c)+" \\\\ \\text{matching form} &= "+corrPlain+" \\\\ &= "+u4p(a,b,c)+" \\end{aligned} \\] Both give the same polynomial, so the match is <b>"+corr+"</b>.";
+    return mcq("Which expression is equivalent to \\("+targetPlain+"\\)? Equivalent expressions have the same value for every value of \\(x\\).",{t:corr,fb:"Correct: its split terms combine back to exactly the target coefficients."},ds,sol,{mode:"match-equiv",a:a,b:b,c:c,sk:sk});
+  }
+  return mcq("Which expression is equivalent to \\(5+3x^{2}-2x\\)? Equivalent expressions have the same value for every value of \\(x\\).",{t:"\\(x^{2}+2x^{2}-2x+5\\)",fb:"Correct: its split terms combine back to exactly the target coefficients."},[{t:u4m(3,2,5),fb:"The x coefficient has the wrong sign."},{t:u4m(4,-2,5),fb:"The x squared coefficient is off by one."},{t:u4m(3,-2,-5),fb:"The constant has the wrong sign."}],"Combining the split x squared part, 1 plus 2, gives the target, so the match is <b>\\(x^{2}+2x^{2}-2x+5\\)</b>.",{mode:"match-equiv",a:3,b:-2,c:5,sk:0});
+}, ["Compare coefficients kind by kind: equivalent forms have the same x squared coefficient, the same x coefficient and the same constant.", "First rewrite the target with the x squared term first, then check which option combines to those same three numbers."]);
+
+E("u4-mult-monomial-area", 4, ["8.8"], 3, "gen", function(){
+  for(var att=0;att<300;att++){
+    var m=ri(2,4),p=ri(1,5),c=u4nz(-6,6);
+    var mp=m*p,mc=m*c;
+    var corr=u4m(mp,mc,0);
+    var cands=[
+      {t:u4m(mp,0,mc),fb:"That writes the second region product as a constant; multiplying by a monomial with x gives an x term."},
+      {t:u4m(mp,m+c,0),fb:"The constant part was added to the monomial coefficient instead of multiplied by the whole monomial."},
+      {t:u4m(mp,-mc,0),fb:"The second region product has the wrong sign; check the sign of the constant part."},
+      {t:u4m(mp,c,0),fb:"That counts only the first region and leaves the second part unmultiplied by the monomial."}
+    ];
+    var ds=u4pick3(corr,cands);
+    if(ds.length<3)continue;
+    var mono=u4expr([[m,"x"]]),other=u4p(0,p,c);
+    var sol="Multiply the monomial into each part of the other side and add the two region areas: \\[ \\begin{aligned} A &= ("+mono+")("+other+") \\\\ &= ("+mono+")("+u4expr([[p,"x"]])+") + ("+mono+")("+fmt(c)+") \\\\ &= "+u4p(mp,mc,0)+" \\end{aligned} \\] So the total area is <b>"+corr+"</b>.";
+    var q=mcq("The diagram shows a rectangle split into two regions. Its height is \\("+mono+"\\), and the two parts of its top side are \\("+u4expr([[p,"x"]])+"\\) and \\("+fmt(c)+"\\). The area of a rectangle is its height times its width. What is the total area of the rectangle as a simplified polynomial?",{t:corr,fb:"Correct: the monomial multiplies both parts, and the region areas add."},ds,sol,{mode:"area-mono",m:m,p:p,c:c});
+    q.figure=u4tArea(m,p,c);
+    return q;
+  }
+  var qf=mcq("The diagram shows a rectangle split into two regions. Its height is \\(3x\\), and the two parts of its top side are \\(2x\\) and \\(5\\). The area of a rectangle is its height times its width. What is the total area of the rectangle as a simplified polynomial?",{t:u4m(6,15,0),fb:"Correct: the monomial multiplies both parts, and the region areas add."},[{t:u4m(6,0,15),fb:"That writes the second region product as a constant."},{t:u4m(6,8,0),fb:"The constant part was added instead of multiplied."},{t:u4m(6,-15,0),fb:"The second region product has the wrong sign."}],"Multiplying into both parts gives <b>"+u4m(6,15,0)+"</b>.",{mode:"area-mono",m:3,p:2,c:5});
+  qf.figure=u4tArea(3,2,5);
+  return qf;
+}, ["Multiply the monomial by each part of the split side, then add the two region areas.", "First find the area of the left region: multiply the height by the first part of the top side."]);
+
+E("u4-divide-missing-term", 4, ["8.9"], 3, "gen", function(){
+  for(var att=0;att<300;att++){
+    var m=pick([-4,-3,-2,2,3,4]),p=u4nz(-5,5),qq=u4nz(-5,5);
+    var B=m*qq,mp=m*p;
+    var corrPlain=u4expr([[mp,"x^{3}"]]);
+    var corr="\\("+corrPlain+"\\)";
+    var cands=[
+      {t:"\\("+u4expr([[p,"x^{2}"]])+"\\)",fb:"That is the quotient term itself; it still has to be multiplied by the divisor."},
+      {t:"\\("+u4expr([[p,"x^{3}"]])+"\\)",fb:"The power is right, but the coefficient of the divisor was not applied."},
+      {t:"\\("+u4expr([[mp,"x^{2}"]])+"\\)",fb:"The coefficient is right, but multiplying by the divisor raises the power by one, to 3."},
+      {t:"\\("+u4expr([[mp,"x^{4}"]])+"\\)",fb:"That power is one too high; the divisor has power 1, so the missing term has power 3."}
+    ];
+    var ds=u4pick3(corr,cands);
+    if(ds.length<3)continue;
+    var divisor=u4expr([[m,"x"]]),quotient=u4p(p,qq,0);
+    var bSigned=(B<0?" - ":" + ")+u4expr([[Math.abs(B),"x^{2}"]]);
+    var sol="Work backwards from the quotient term that pairs with the blank, and check with the known term: \\[ \\begin{aligned} \\text{missing term} \\div ("+divisor+") &= "+u4expr([[p,"x^{2}"]])+" \\\\ \\text{missing term} &= "+u4expr([[p,"x^{2}"]])+" \\cdot ("+divisor+") \\\\ &= "+corrPlain+" \\end{aligned} \\] Check: \\(("+u4expr([[B,"x^{2}"]])+") \\div ("+divisor+") = "+u4expr([[qq,"x"]])+"\\), which matches the quotient. So the blank is <b>"+corr+"</b>.";
+    return mcq("A division has one term of the dividend missing: \\((\\underline{\\hspace{1.2cm}}"+bSigned+") \\div ("+divisor+") = ("+quotient+")\\). Which monomial fills the blank?",{t:corr,fb:"Correct: multiplying that quotient term by the divisor gives this term."},ds,sol,{mode:"div-missing",m:m,p:p,q:qq});
+  }
+  return mcq("A division has one term of the dividend missing: \\((\\underline{\\hspace{1.2cm}} + 6x^{2}) \\div (3x) = (2x^{2}+2x)\\). Which monomial fills the blank?",{t:"\\(6x^{3}\\)",fb:"Correct: multiplying that quotient term by the divisor gives this term."},[{t:"\\(2x^{2}\\)",fb:"That is the quotient term itself; it still has to be multiplied by the divisor."},{t:"\\(2x^{3}\\)",fb:"The power is right, but the coefficient of the divisor was not applied."},{t:"\\(6x^{2}\\)",fb:"The coefficient is right, but the power should rise by one, to 3."}],"Multiplying the quotient term by the divisor gives <b>\\(6x^{3}\\)</b>.",{mode:"div-missing",m:3,p:2,q:2});
+}, ["Division undoes multiplication: multiply the matching quotient term by the divisor to recover the missing term.", "First match the blank with the first quotient term, since the known term pairs with the second one."]);
+
 var CR_MARKS={
  "u1-frac-context": 3,
  "u1-money-decimals": 3,
@@ -2246,20 +3262,49 @@ function showHint(i){
   if(stage===0){box.innerHTML="<b>Hint:</b> "+first;box.hidden=false;box.dataset.stage="1";}
   else if(stage===1){box.innerHTML="<b>Hint:</b> "+first+(h2?("<br><b>First step:</b> "+stepHTML(h2)):"");box.hidden=false;box.dataset.stage="2";}
 }
-function showExample(i){
-  var q=current[i];if(!q||!q._entry)return;
-  var box=$("ex"+i);if(!box)return;
+function dealExample(i,n,prev){
+  var q=current[i];if(!q||!q._entry)return null;
   var e=q._entry;
-  var sd=sessionSeed?(sessionSeed+"|example|"+e.id):"";
-  var exq=withSeed(sd,function(){var c=canonQ(q),t=null;for(var k=0;k<12;k++){var cand=e.gen();cand._entry=e;t=cand;if(canonQ(cand)!==c)break;}return t;});
-  if(!exq)return;
+  var sd=sessionSeed?(sessionSeed+"|example|"+e.id+"|"+n):"";
+  return withSeed(sd,function(){var c=canonQ(q),pc=prev?canonQ(prev):null,t=null;
+    for(var k=0;k<12;k++){var cand=e.gen();cand._entry=e;t=cand;var cc=canonQ(cand);if(cc!==c&&cc!==pc)break;}
+    return t;});
+}
+function renderExample(i,exq){
+  var box=$("ex"+i);if(!box)return;
+  box._exq=exq;
   var h='<b>Worked example</b> (same skill, different numbers; not scored)<div class="prompt">'+stepHTML(exq.prompt)+"</div>";
   if(exq.figure)h+='<div class="fig">'+exq.figure+"</div>";
   if(exq.type==="mc"){h+='<div class="opts">'+exq.options.map(function(o,j){return "<label>\u25CB "+o+(j===exq.correct?" <b>\u2713 correct</b>":"")+"</label>";}).join("")+"</div>";}
   else if(exq.type==="num"){h+="<p>Answer: <b>"+fmt(exq.answer)+"</b></p>";}
   else{h+="<p>Answer: <b>"+esc(exq.answers[0])+"</b></p>";}
   h+='<div class="sol show"><b>Worked solution:</b> '+stepHTML(exq.solution)+"</div>";
+  h+='<p><button type="button" class="alt" data-exanother="'+i+'">Show another example</button></p>';
   box.innerHTML=h;box.hidden=false;typesetMath(box);
+  Array.prototype.forEach.call(box.querySelectorAll("[data-exanother]"),function(b){b.addEventListener("click",function(){anotherExample(i);});});
+}
+function setExLabel(i,open){var b=document.querySelector('[data-ex="'+i+'"]');if(b)b.textContent=open?"Hide worked example":"See a worked example";}
+function toggleExample(i){
+  var q=current[i];if(!q||!q._entry)return;
+  var box=$("ex"+i);if(!box)return;
+  if(!box.hidden){box.hidden=true;setExLabel(i,false);return;}
+  if(box._exq){box.hidden=false;setExLabel(i,true);return;}
+  box.dataset.exn="0";
+  var exq=dealExample(i,0,null);
+  if(!exq)return;
+  renderExample(i,exq);setExLabel(i,true);
+}
+function anotherExample(i){
+  var box=$("ex"+i);if(!box||!box._exq)return;
+  var n=(+(box.dataset.exn||0))+1;box.dataset.exn=String(n);
+  var exq=dealExample(i,n,box._exq);
+  if(!exq)return;
+  renderExample(i,exq);setExLabel(i,true);
+}
+function toggleSolution(i,btn){
+  var sol=$("sol"+i);if(!sol)return;
+  var open=sol.classList.toggle("show");
+  if(btn)btn.textContent=open?"Hide worked solution":"Show worked solution";
 }
 function maybeSummary(){
   var box=$("setSummary");if(!box||!current)return;
@@ -2310,9 +3355,9 @@ function startOnline(){
   html+='<p>'+(checkMode==="end"?'<button type="button" id="gradeBtn">Check all my answers</button> ':"")+'<button type="button" id="againBtn">New set of questions</button></p><p><button type="button" class="alt" data-kahoot="1">Download for Kahoot</button> <button type="button" class="alt" data-blooket="1">Download for Blooket</button></p><p class="hint" id="gameStatus"></p><div id="setSummary"></div></div>';
   box.innerHTML=html;updateScore();typesetMath(box);
   Array.prototype.forEach.call(box.querySelectorAll("[data-check]"),function(b){b.addEventListener("click",function(){checkQ(+b.getAttribute("data-check"));});});
-  Array.prototype.forEach.call(box.querySelectorAll("[data-sol]"),function(b){b.addEventListener("click",function(){$("sol"+b.getAttribute("data-sol")).classList.toggle("show");});});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-sol]"),function(b){b.addEventListener("click",function(){toggleSolution(+b.getAttribute("data-sol"),b);});});
   Array.prototype.forEach.call(box.querySelectorAll("[data-hint]"),function(b){b.addEventListener("click",function(){showHint(+b.getAttribute("data-hint"));});});
-  Array.prototype.forEach.call(box.querySelectorAll("[data-ex]"),function(b){b.addEventListener("click",function(){showExample(+b.getAttribute("data-ex"));});});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-ex]"),function(b){b.addEventListener("click",function(){toggleExample(+b.getAttribute("data-ex"));});});
   Array.prototype.forEach.call(box.querySelectorAll("[data-rep]"),function(b){b.addEventListener("click",function(){$("rep"+b.getAttribute("data-rep")).classList.toggle("show");});});
   Array.prototype.forEach.call(box.querySelectorAll("[data-repsend]"),function(b){b.addEventListener("click",function(){openReport(+b.getAttribute("data-repsend"));});});
   Array.prototype.forEach.call(box.querySelectorAll("[data-repcopy]"),function(b){b.addEventListener("click",function(){copyReport(+b.getAttribute("data-repcopy"));});});
