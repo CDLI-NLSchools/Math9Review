@@ -13,6 +13,7 @@ A generated practice question bank for **Mathematics 9** (Newfoundland and Labra
 - Every practice question carries a staged hint (strategy, then first step), a "See a worked example" button that shows the same skill with different numbers, per-answer feedback on multiple choice questions, and a full worked solution. The end-of-set summary lists any indicators missed and offers a "Practice what I missed" set. A collapsible "Formulas and facts for this unit" panel sits at the top of each practice set.
 - Practice exams offer an optional soft timer that counts up and notes the 1.5-hour exam length. It never locks or submits anything.
 - Teachers can set a seed word or phrase in the builder ("Same problems for everyone"): a shared link carrying that seed gives every student the identical set, same questions, same values, same order, including the worked examples. With no seed, each student gets a fresh random set.
+- Any practice set or practice exam can be downloaded for Kahoot (.xlsx, in Kahoot's template layout) or Blooket (.csv, in Blooket's template layout) to run the same multiple choice questions as a game, with the math written as readable plain text and a time limit set by question level (20, 30 or 60 seconds). Constructed-response questions are not exported, and the app says how many were left out.
 
 ## Sources and originality
 

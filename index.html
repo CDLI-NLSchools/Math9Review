@@ -2307,7 +2307,7 @@ function startOnline(){
       +(REPORT_FORM.url?'<p><button type="button" data-repsend="'+i+'">Send report</button> <button type="button" class="alt" data-repcopy="'+i+'">Copy report text instead</button></p>':'<p><button type="button" data-repcopy="'+i+'">Copy report text</button></p>')
       +'<div class="repstat" id="repstat'+i+'"></div></div></div>';
   });
-  html+='<p>'+(checkMode==="end"?'<button type="button" id="gradeBtn">Check all my answers</button> ':"")+'<button type="button" id="againBtn">New set of questions</button></p><div id="setSummary"></div></div>';
+  html+='<p>'+(checkMode==="end"?'<button type="button" id="gradeBtn">Check all my answers</button> ':"")+'<button type="button" id="againBtn">New set of questions</button></p><p><button type="button" class="alt" data-kahoot="1">Download for Kahoot</button> <button type="button" class="alt" data-blooket="1">Download for Blooket</button></p><p class="hint" id="gameStatus"></p><div id="setSummary"></div></div>';
   box.innerHTML=html;updateScore();typesetMath(box);
   Array.prototype.forEach.call(box.querySelectorAll("[data-check]"),function(b){b.addEventListener("click",function(){checkQ(+b.getAttribute("data-check"));});});
   Array.prototype.forEach.call(box.querySelectorAll("[data-sol]"),function(b){b.addEventListener("click",function(){$("sol"+b.getAttribute("data-sol")).classList.toggle("show");});});
@@ -2317,6 +2317,8 @@ function startOnline(){
   Array.prototype.forEach.call(box.querySelectorAll("[data-repsend]"),function(b){b.addEventListener("click",function(){openReport(+b.getAttribute("data-repsend"));});});
   Array.prototype.forEach.call(box.querySelectorAll("[data-repcopy]"),function(b){b.addEventListener("click",function(){copyReport(+b.getAttribute("data-repcopy"));});});
   $("againBtn").addEventListener("click",startOnline);
+  Array.prototype.forEach.call(box.querySelectorAll("[data-kahoot]"),function(b){b.addEventListener("click",function(){exportGame("kahoot",current,$("gameStatus"));});});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-blooket]"),function(b){b.addEventListener("click",function(){exportGame("blooket",current,$("gameStatus"));});});
   if($("gradeBtn"))$("gradeBtn").addEventListener("click",gradeAll);
   box.scrollIntoView({behavior:"smooth"});
 }
@@ -2533,7 +2535,7 @@ function startExam(){
   $("printArea").innerHTML=paper;
   $("session").innerHTML='<div class="card"><p>Your '+(single?"practice unit test":"practice exam")+' is ready: '+ex.srItems.length+' selected-response questions and '+ex.crItems.length+' constructed-response questions, '+ex.total+' marks in total. The exam paper and the answer key print separately.</p>'
     +(ex.short?'<p class="thinNote">Heads up: the bank could not fill every exam slot for this selection yet, so this paper runs short of the full blueprint.</p>':"")
-    +'<div class="row"><button type="button" id="editExamBtn">Edit the exam</button><button type="button" id="printPaperBtn">Print the exam paper</button><button type="button" id="printKeyBtn" class="sec">Print the answer key</button><button type="button" id="wordBtn" class="sec">Download Word file</button><button type="button" id="copyDocsBtn" class="sec">Copy for Google Docs</button></div>'
+    +'<div class="row"><button type="button" id="editExamBtn">Edit the exam</button><button type="button" id="printPaperBtn">Print the exam paper</button><button type="button" id="printKeyBtn" class="sec">Print the answer key</button><button type="button" id="wordBtn" class="sec">Download Word file</button><button type="button" id="copyDocsBtn" class="sec">Copy for Google Docs</button><button type="button" id="kahootBtn" class="sec">Download for Kahoot</button><button type="button" id="blooketBtn" class="sec">Download for Blooket</button></div>'
     +'<p class="hint" id="editHint" hidden>Editing is on: click any text in the exam below and type to change it, or delete a question you do not want. Drag the bar at the bottom of a Section B answer box to make that box taller or shorter. What you see is what prints and what the Word file contains.</p>'
     +'<p class="hint" id="copyStatus" role="status"></p>'
     +'<div class="sheetPrev" id="sheetPrev">'+paper+'<div class="keybreak">'+key+'</div></div></div>';
@@ -2546,6 +2548,8 @@ function startExam(){
   });
   $("wordBtn").addEventListener("click",function(){downloadWordFile($("copyStatus"));});
   $("copyDocsBtn").addEventListener("click",function(){copyFrom($("sheetPrev"),"docs",$("copyStatus"));});
+  $("kahootBtn").addEventListener("click",function(){exportGame("kahoot",ex.srItems.map(function(it){return it.q;}),$("copyStatus"),ex.crItems.length);});
+  $("blooketBtn").addEventListener("click",function(){exportGame("blooket",ex.srItems.map(function(it){return it.q;}),$("copyStatus"),ex.crItems.length);});
   $("printPaperBtn").addEventListener("click",function(){var pp=previewParts();if(pp){$("printArea").innerHTML=pp.paper;}else{$("printArea").innerHTML=paper;typesetMath($("printArea"));}window.print();});
   $("printKeyBtn").addEventListener("click",function(){var pp=previewParts();if(pp){$("printArea").innerHTML=pp.key;}else{$("printArea").innerHTML=key;typesetMath($("printArea"));}window.print();});
 }
@@ -3090,6 +3094,184 @@ function makeWordDocx(rootEl,st){
   ]);
 }
 var wordName="Math 9 Practice Sheet.docx";
+
+/* ===== Kahoot and Blooket exports =====
+   Formats verified November 7, 2026 against the platforms' own help
+   centers. Kahoot (support.kahoot.com, "How to import questions from a
+   spreadsheet to your kahoot", updated November 6, 2026; header text read
+   from the template screenshot in that article): .xlsx only; header row
+   "Question - 120 max length", "Answer 1 - 75 max length", "Answer 2 - 75
+   max length", "Answer 3 - 75 max length", "Answer 4 - 75 max length",
+   "Time limit (sec)", "Correct answer(s)"; questions limited to 120
+   characters, answers to 75; the time limit must be one of 5, 10, 20, 30,
+   60, 120; correct answers are listed by number. Blooket
+   (help.blooket.com, "How to Import Questions from a Spreadsheet into
+   Blooket"; header text read from the template screenshot in that
+   article): .csv; header row "Question #", "Question Text", "Answer 1",
+   "Answer 2", "Answer 3 (Optional)", "Answer 4 (Optional)", "Time Limit
+   (sec) (Max: 300 Seconds)", "Correct Answer(s) (Only Include Answer #)";
+   correct answers by number only; time limit up to 300 seconds.
+   Time limits by question level, the same on both platforms: Level 1 = 20
+   seconds, Level 2 = 30, Level 3 = 60 (all inside Kahoot's allowed set).
+   Only multiple choice questions export; constructed-response questions
+   are counted and reported in the status line, never sent. */
+var GAME_TIME={1:20,2:30,3:60};
+var SUPMAP={"0":"\u2070","1":"\u00B9","2":"\u00B2","3":"\u00B3","4":"\u2074","5":"\u2075","6":"\u2076","7":"\u2077","8":"\u2078","9":"\u2079","-":"\u207B","+":"\u207A","n":"\u207F","x":"\u02E3"};
+function texGroup(s,i){
+  var depth=0;
+  for(var j=i;j<s.length;j++){
+    if(s[j]==="{")depth++;
+    else if(s[j]==="}"){depth--;if(depth===0)return [s.slice(i+1,j),j+1];}
+  }
+  return [s.slice(i+1),s.length];
+}
+function texArg(s,i){
+  if(s[i]==="{")return texGroup(s,i);
+  var m=/^\\[a-zA-Z]+/.exec(s.slice(i));
+  if(m)return [m[0],i+m[0].length];
+  return [s[i]||"",i+1];
+}
+function texToPlain(s){
+  var out="",i=0;
+  while(i<s.length){
+    var ch=s[i];
+    if(ch==="\\"){
+      var m=/^\\([a-zA-Z]+)/.exec(s.slice(i));
+      if(m){
+        var cmd=m[1];i+=m[0].length;
+        if(cmd==="frac"||cmd==="dfrac"||cmd==="tfrac"){
+          var g1=texArg(s,i);i=g1[1];var g2=texArg(s,i);i=g2[1];
+          var num=texToPlain(g1[0]),den=texToPlain(g2[0]);
+          var simple=/^[0-9a-zA-Z.]+$/.test(num)&&/^[0-9a-zA-Z.]+$/.test(den);
+          out+=simple?(num+"/"+den):("("+num+")/("+den+")");
+          continue;
+        }
+        if(cmd==="sqrt"){var gs=texArg(s,i);i=gs[1];var inner=texToPlain(gs[0]);out+=(/^[0-9.]+$/.test(inner)?"\u221A"+inner:"\u221A("+inner+")");continue;}
+        if(cmd==="text"||cmd==="mathrm"||cmd==="operatorname"){var gt=texArg(s,i);i=gt[1];out+=gt[0];continue;}
+        if(cmd==="overline"){var go=texArg(s,i);i=go[1];out+=texToPlain(go[0])+"\u0305";continue;}
+        if(cmd==="begin"||cmd==="end"){var gb=texArg(s,i);i=gb[1];continue;}
+        var sym={"times":"\u00D7","div":"\u00F7","pi":"\u03C0","ne":"\u2260","neq":"\u2260","le":"\u2264","leq":"\u2264","ge":"\u2265","geq":"\u2265","cdot":"\u00B7","pm":"\u00B1","approx":"\u2248","infty":"\u221E","alpha":"\u03B1","beta":"\u03B2","theta":"\u03B8","Delta":"\u0394"}[cmd];
+        if(sym!==undefined){out+=sym;continue;}
+        continue;
+      }
+      var nx=s[i+1];
+      if(nx==="\\"){out+=" ";i+=2;continue;}
+      if(nx==="&"){out+="&";i+=2;continue;}
+      if(nx){out+=nx;i+=2;continue;}
+      i++;continue;
+    }
+    if(ch==="^"){
+      var sup;
+      if(s[i+1]==="{"){var gh=texGroup(s,i+1);sup=gh[0];i=gh[1];}
+      else{sup=s[i+1]||"";i+=2;}
+      var mapped="",okMap=sup.length>0;
+      for(var k=0;k<sup.length;k++){var sm=SUPMAP[sup[k]];if(!sm){okMap=false;break;}mapped+=sm;}
+      out+=okMap?mapped:("^("+texToPlain(sup)+")");
+      continue;
+    }
+    if(ch==="_"){
+      var sub;
+      if(s[i+1]==="{"){var gu=texGroup(s,i+1);sub=gu[0];i=gu[1];}
+      else{sub=s[i+1]||"";i+=2;}
+      out+=texToPlain(sub);
+      continue;
+    }
+    if(ch==="{"){var gc=texGroup(s,i);out+=texToPlain(gc[0]);i=gc[1];continue;}
+    if(ch==="}"){i++;continue;}
+    if(ch==="&"){i++;continue;}
+    if(ch==="~"){out+=" ";i++;continue;}
+    out+=ch;i++;
+  }
+  return out;
+}
+function exportText(h){
+  var s=String(h==null?"":h);
+  s=s.replace(/\\\[([\s\S]*?)\\\]/g,function(_,t){return " "+texToPlain(t)+" ";});
+  s=s.replace(/\\\(([\s\S]*?)\\\)/g,function(_,t){return " "+texToPlain(t)+" ";});
+  s=s.replace(/<br\s*\/?>/gi," ").replace(/<[^>]+>/g," ");
+  s=s.replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,"\"").replace(/&#39;|&apos;/g,"'").replace(/&nbsp;/g," ");
+  return s.replace(/\s+/g," ").trim();
+}
+function gameRows(items){
+  var rows=[],leftOut=0;
+  items.forEach(function(q){
+    if(!q||q.type!=="mc"||!q.options||q.options.length!==4){leftOut++;return;}
+    rows.push({q:exportText(q.prompt),a:q.options.map(exportText),correct:q.correct+1,time:GAME_TIME[q._entry?q._entry.level:2]||30});
+  });
+  return {rows:rows,leftOut:leftOut};
+}
+function xmlEsc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function colName(n){var s="";n++;while(n>0){var r=(n-1)%26;s=String.fromCharCode(65+r)+s;n=Math.floor((n-1)/26);}return s;}
+function buildKahootXlsx(items){
+  var g=gameRows(items);
+  var head=["Question - 120 max length","Answer 1 - 75 max length","Answer 2 - 75 max length","Answer 3 - 75 max length","Answer 4 - 75 max length","Time limit (sec)","Correct answer(s)"];
+  var all=[head].concat(g.rows.map(function(r){return [r.q,r.a[0],r.a[1],r.a[2],r.a[3],r.time,r.correct];}));
+  var overQ=0,overA=0;
+  g.rows.forEach(function(r){if(r.q.length>120)overQ++;if(r.a.some(function(x){return x.length>75;}))overA++;});
+  var body="";
+  all.forEach(function(row,ri){
+    body+="<row r=\""+(ri+1)+"\">";
+    row.forEach(function(v,ci){
+      var ref=colName(ci)+(ri+1);
+      if(typeof v==="number")body+="<c r=\""+ref+"\"><v>"+v+"</v></c>";
+      else body+="<c r=\""+ref+"\" t=\"inlineStr\"><is><t xml:space=\"preserve\">"+xmlEsc(v)+"</t></is></c>";
+    });
+    body+="</row>";
+  });
+  var sheet="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><sheetData>"+body+"</sheetData></worksheet>";
+  var wb="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><sheets><sheet name=\"Sheet1\" sheetId=\"1\" r:id=\"rId1\"/></sheets></workbook>";
+  var ct="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/><Default Extension=\"xml\" ContentType=\"application/xml\"/><Override PartName=\"/xl/workbook.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\"/><Override PartName=\"/xl/worksheets/sheet1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/></Types>";
+  var rels="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"xl/workbook.xml\"/></Relationships>";
+  var wbrels="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet1.xml\"/></Relationships>";
+  var enc=new TextEncoder();
+  var bytes=zipStore([
+    {name:"[Content_Types].xml",data:enc.encode(ct)},
+    {name:"_rels/.rels",data:enc.encode(rels)},
+    {name:"xl/workbook.xml",data:enc.encode(wb)},
+    {name:"xl/_rels/workbook.xml.rels",data:enc.encode(wbrels)},
+    {name:"xl/worksheets/sheet1.xml",data:enc.encode(sheet)}
+  ]);
+  return {bytes:bytes,count:g.rows.length,leftOut:g.leftOut,overQ:overQ,overA:overA};
+}
+function csvCell(v){var s=String(v);return /[",\n]/.test(s)?("\""+s.replace(/"/g,"\"\"")+"\""):s;}
+function buildBlooketCsv(items){
+  var g=gameRows(items);
+  var head=["Question #","Question Text","Answer 1","Answer 2","Answer 3 (Optional)","Answer 4 (Optional)","Time Limit (sec) (Max: 300 Seconds)","Correct Answer(s) (Only Include Answer #)"];
+  var lines=[head.map(csvCell).join(",")];
+  g.rows.forEach(function(r,i){lines.push([i+1,r.q,r.a[0],r.a[1],r.a[2],r.a[3],r.time,r.correct].map(csvCell).join(","));});
+  return {text:lines.join("\r\n")+"\r\n",count:g.rows.length,leftOut:g.leftOut};
+}
+function downloadBlob(name,blob){
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");a.href=url;a.download=name;
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){if(a.parentNode)a.parentNode.removeChild(a);URL.revokeObjectURL(url);},400);
+}
+function exportGame(kind,items,statusEl,leftOutOverride){
+  try{
+    if(kind==="kahoot"){
+      var k=buildKahootXlsx(items);
+      if(!k.count){if(statusEl)statusEl.textContent="This set has no multiple choice questions to export.";return;}
+      downloadBlob("Math 9 for Kahoot.xlsx",new Blob([k.bytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
+      var lo=(typeof leftOutOverride==="number")?leftOutOverride:k.leftOut;
+      var t="Kahoot file downloaded with "+k.count+" questions.";
+      if(lo)t+=" "+lo+" constructed-response question"+(lo===1?" was":"s were")+" left out, because Kahoot only takes multiple choice.";
+      var extra="";
+      if(k.overQ)extra+=k.overQ+" question"+(k.overQ===1?" is":"s are")+" longer than Kahoot's 120-character question limit; Kahoot will flag "+(k.overQ===1?"it":"them")+" at import, so shorten "+(k.overQ===1?"that row":"those rows")+" in the spreadsheet first.";
+      if(k.overA)extra+=(extra?" ":"")+k.overA+" question"+(k.overA===1?" has an answer":"s have answers")+" longer than Kahoot's 75-character answer limit; shorten "+(k.overA===1?"it":"them")+" in the spreadsheet first.";
+      if(extra)t+=" "+extra;
+      if(statusEl)statusEl.textContent=t;
+    }else{
+      var b=buildBlooketCsv(items);
+      if(!b.count){if(statusEl)statusEl.textContent="This set has no multiple choice questions to export.";return;}
+      downloadBlob("Math 9 for Blooket.csv",new Blob(["\ufeff"+b.text],{type:"text/csv"}));
+      var lo2=(typeof leftOutOverride==="number")?leftOutOverride:b.leftOut;
+      var t2="Blooket file downloaded with "+b.count+" questions.";
+      if(lo2)t2+=" "+lo2+" constructed-response question"+(lo2===1?" was":"s were")+" left out, because Blooket only takes multiple choice.";
+      if(statusEl)statusEl.textContent=t2;
+    }
+  }catch(e){if(statusEl)statusEl.textContent="The export did not finish: "+e.message;}
+}
 function downloadWordFile(statusEl){
   var prev=$("sheetPrev");
   if(!prev)return;
