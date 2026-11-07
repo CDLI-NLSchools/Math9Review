@@ -6559,7 +6559,7 @@ function renderExample(i,exq){
   if(exq.type==="mc"){h+='<div class="opts">'+exq.options.map(function(o,j){return "<label>\u25CB "+o+(j===exq.correct?" <b>\u2713 correct</b>":"")+"</label>";}).join("")+"</div>";}
   else if(exq.type==="num"){h+="<p>Answer: <b>"+fmt(exq.answer)+"</b></p>";}
   else{h+="<p>Answer: <b>"+esc(exq.answers[0])+"</b></p>";}
-  h+='<div class="sol show"><b>Worked solution:</b> '+stepHTML(exq.solution)+"</div>";
+  h+='<div class="sol show"><b>Worked Example Solution:</b> '+stepHTML(exq.solution)+"</div>";
   h+='<p><button type="button" class="alt" data-exanother="'+i+'">Show another example</button></p>';
   box.innerHTML=h;box.hidden=false;typesetMath(box);
   Array.prototype.forEach.call(box.querySelectorAll("[data-exanother]"),function(b){b.addEventListener("click",function(){anotherExample(i);});});
