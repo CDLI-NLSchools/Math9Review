@@ -2025,7 +2025,7 @@ E("u1-ooo-brackets-mc", 1, ["6.2"], 2, "gen", function () {
     P = { fn: 3, fd: 4, fv: 0.75, c: 2.25, S: 3, D: 6, a: 9, d: 3, e: 2, f: 4.5, g: 5, q1: 2, q2: 0.9, V: 4.9, E1: 1.9, E2: 7.9, E3: 1.7, E4: 8.9 };
   }
   var expr = "\\((" + fmt(P.a) + " - (" + FR(P.fn, P.fd) + " + " + fmt(P.c) + ")) \\div " + P.d + " \\times " + P.e + " + " + fmt(P.f) + " \\div " + P.g + "\\)";
-  var prompt = "Evaluate without using a calculator: " + expr;
+  var prompt = "Evaluate: " + expr;
   var steps = "\\[ \\begin{aligned} (" + fmt(P.a) + " - (" + FR(P.fn, P.fd) + " + " + fmt(P.c) + ")) \\div " + P.d + " \\times " + P.e + " + " + fmt(P.f) + " \\div " + P.g + " &= (" + fmt(P.a) + " - " + fmt(P.S) + ") \\div " + P.d + " \\times " + P.e + " + " + fmt(P.f) + " \\div " + P.g + " \\\\ &= " + fmt(P.D) + " \\div " + P.d + " \\times " + P.e + " + " + fmt(P.q2) + " \\\\ &= " + fmt(P.q1) + " \\times " + P.e + " + " + fmt(P.q2) + " \\\\ &= " + fmt(P.q1 * P.e) + " + " + fmt(P.q2) + " \\\\ &= " + fmt(P.V) + " \\end{aligned} \\]";
   var solution = "Work the inner brackets first, then do divisions and multiplications from left to right, then the addition: " + steps + " So the value is <b>" + fmt(P.V) + "</b>.";
   var errs = [
@@ -6831,7 +6831,7 @@ function startExam(){
   wordName=single?"Math 9 Practice Unit Test.docx":"Math 9 Practice Exam.docx";
   var paper='<div class="nameline"><div>Name:<span></span></div><div>Date:<span></span></div></div>';
   paper+='<h1 style="font-size:1.3rem;">'+title+'</h1><p>'+scope+' \u00B7 Total marks: '+ex.total+'</p>';
-  paper+='<p style="font-size:.92rem;">Answer all questions. In Section A, choose the best answer for each question and record it on the answer record at the end of Section A. In Section B, show all workings in the space provided; marks are shown beside each question.</p>';
+  paper+='<p style="font-size:.92rem;">Answer all questions. In Section A, choose the best answer for each question and record it on the answer record at the end of Section A. In Section B, show all your work in the space provided; marks are shown beside each question.</p>';
   var n=0;
   paper+='<h2 style="font-size:1.05rem;">Section A: Selected Response ('+ex.srMarks+' marks)</h2>';
   ex.srItems.forEach(function(it){n++;var q=it.q;
@@ -6890,7 +6890,7 @@ function startSheet(){
   var html='<div class="nameline"><div>Name:<span></span></div><div>Date:<span></span></div></div>';
   var wsMcF=(typeof s.wsMc==="number"&&!isNaN(s.wsMc))?s.wsMc:0;
   var wsCrF=(typeof s.wsCr==="number"&&!isNaN(s.wsCr))?s.wsCr:2.3;
-  html+='<h1 style="font-size:1.3rem;">'+"Math 9: Practice Sheet"+'</h1><p>'+unitNames+(s.inds.length?(" \u00B7 Indicators: "+s.inds.join(", ")):"")+' \u00B7 '+res.items.length+' questions \u00B7 '+((wsMcF>0||wsCrF>0)?'Show all workings in the space provided.':'Show all workings on your own paper.')+'</p>';
+  html+='<h1 style="font-size:1.3rem;">'+"Math 9: Practice Sheet"+'</h1><p>'+unitNames+(s.inds.length?(" \u00B7 Indicators: "+s.inds.join(", ")):"")+' \u00B7 '+res.items.length+' questions \u00B7 '+((wsMcF>0||wsCrF>0)?'Show all your work in the space provided.':'Show all your work on your own paper.')+'</p>';
   res.items.forEach(function(q,i){
     var h=Math.round((q._entry.level===3?170:(q.type==="mc"?120:150))*((q.type==="mc")?wsMcF:wsCrF));
     html+='<div class="pq"><p><b>'+(i+1)+'.</b> <span style="font-size:.8rem;color:#555;">(Unit '+q._entry.unit+' \u00B7 '+q._entry.indicators.join(", ")+' \u00B7 Level '+q._entry.level+')</span></p><div class="prompt">'+stepHTML(q.prompt)+'</div>';
