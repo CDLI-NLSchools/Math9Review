@@ -631,6 +631,19 @@ function E(id,unit,indicators,level,kind,gen,hints){var e={id:id,unit:unit,indic
    \frac fragment for use INSIDE math delimiters, defined here for the
    entries that use it. CR_MARKS stays at the end of this file. */
 function FR(n,d){return "\\frac{"+n+"}{"+d+"}";}
+/* Precision pairing for numeric distractors (Nov 8 programme): prints each
+   distractor value with trailing zeros so its decimal-place count pairs with
+   the key's count or with another distractor's count. A value is only ever
+   printed at a place count it reaches exactly, so no value ever changes. */
+function fmtPairDs(keyT, ds) {
+  function exactDp(v) { for (var d = 0; d <= 6; d++) { if (Math.abs(v * Math.pow(10, d) - Math.round(v * Math.pow(10, d))) < 1e-9) return d; } return 6; }
+  var m = String(keyT).match(/\.(\d+)/); var kd = m ? m[1].length : 0;
+  var pairIdx = -1;
+  for (var i = 0; i < ds.length; i++) { if (exactDp(ds[i].v) <= kd) { pairIdx = i; break; } }
+  if (pairIdx < 0) { var am = 0; ds.forEach(function (d) { am = Math.max(am, exactDp(d.v)); }); return ds.map(function (d) { return { t: fmtF(d.v, am), fb: d.fb }; }); }
+  var common = 0; ds.forEach(function (d, i) { if (i !== pairIdx) common = Math.max(common, exactDp(d.v)); });
+  return ds.map(function (d, i) { return { t: fmtF(d.v, i === pairIdx ? kd : common), fb: d.fb }; });
+}
 
 /* Unit 1: Rational Numbers */
 // Unit 1: Rational Numbers (Math 9, NL). Entries only; helpers prefixed u1.
@@ -691,11 +704,11 @@ E("u1-between-two", 1, ["3.2"], 1, "gen", function () {
     var solD = "The number must be greater than \\(" + fmt(a) + "\\) and less than \\(" + fmt(b) + "\\): \\[ \\begin{aligned} " + fmt(a) + " &< " + fmt(c) + " < " + fmt(b) + " \\end{aligned} \\] So the number between them is <b>\\(" + fmt(c) + "\\)</b>.";
     return mcq(promptD,
       { t: fmt(c), fb: "Correct. It is greater than the left endpoint and less than the right one." },
-      [
-        { t: fmt(low), fb: "That number is smaller than the left endpoint." },
-        { t: fmt(high), fb: "That number is larger than the right endpoint." },
-        { t: fmt(a), fb: "That is the left endpoint itself, not a number between them." }
-      ],
+      fmtPairDs(fmt(c), [
+        { v: low, fb: "That number is smaller than the left endpoint." },
+        { v: high, fb: "That number is larger than the right endpoint." },
+        { v: a, fb: "That is the left endpoint itself, not a number between them." }
+      ]),
       solD, { mode: "between-dec", a: a, b: b });
   }
   var den = pick([6, 8, 10, 12]);
@@ -801,6 +814,7 @@ E("u1-ooo-evaluate-mc", 1, ["6.2"], 2, "gen", function () {
   var offs = [2, -2, 1, -1, 3, -3, 0.5, -0.5];
   var oi = 0;
   while (ds.length < 3 && oi < offs.length) { var cand = u1round(val + offs[oi], 4); oi++; var k2 = fmt(cand); if (!used[k2]) { used[k2] = 1; ds.push({ t: k2, fb: "This comes from an arithmetic slip in one of the steps." }); } }
+  ds = fmtPairDs(fmt(val), ds.map(function (d) { return { v: parseFloat(d.t), fb: d.fb }; }));
   var prompt = "Evaluate: " + expr;
   var solution = "Follow the order of operations, brackets first, then multiplication, then addition and subtraction: " + steps + " So the value is <b>" + fmt(val) + "</b>.";
   return mcq(prompt,
@@ -888,7 +902,7 @@ E("u1-ordering-reasoning-var", 1, ["3.1", "3.2"], 3, "var", varset([
     return mcq(prompt,
       { t: "0.3", fb: "Correct. Each step along the number line adds 0.6." },
       [
-        { t: "0", fb: "Zero would make the steps uneven, since the gaps would differ." },
+        { t: "0.0", fb: "Zero would make the steps uneven, since the gaps would differ." },
         { t: "0.6", fb: "That skips one step, giving a gap of 0.9 before it." },
         { t: "-0.6", fb: "The numbers are increasing, so the missing number is positive." }
       ],
@@ -982,7 +996,7 @@ E("u2-square-from-root", 2, ["6.11"], 1, "gen", function(){
   if(mode==="decimal"){
     var k=ri(2,30); var rd=u2r1(k/10); var nd=u2r2(rd*rd);
     var dc=u2d3(nd,[u2r2(2*rd),u2r2((rd+1)*(rd+1)),u2r2(nd+1),u2r2(nd+0.1),u2r2(nd+2)]);
-    var dopts=dc.map(function(d){return {t:fmt(d), fb:"That is not "+fmt(rd)+" times "+fmt(rd)+": square the root itself."};});
+    var dopts=fmtPairDs(fmt(nd), dc.map(function(d){return {v:d, fb:"That is not "+fmt(rd)+" times "+fmt(rd)+": square the root itself."};}));
     return mcq("A positive number has square root "+fmt(rd)+". What is the number?", {t:fmt(nd), fb:"Yes: "+fmt(rd)+" squared equals "+fmt(nd)+"."}, dopts,
       "Squaring undoes a square root: \\[ "+fmt(rd)+"^{2} = "+fmt(rd)+" \\times "+fmt(rd)+" = "+fmt(nd)+" \\] The number is <b>"+fmt(nd)+"</b>.",
       {mode:"decimal", r:rd});
@@ -1012,7 +1026,7 @@ E("u2-identify-square", 2, ["3.3"], 1, "gen", function(){
     var pool=[0.12,0.15,0.18,0.21,0.27,0.32,0.35,0.45,0.48,0.54,0.6,0.72,0.75,0.8,0.9,1.1,1.2,1.5,1.8,2.2,2.5,2.8,3.5];
     var sh=shuffle(pool); var ds=[]; var i=0;
     while(ds.length<3&&i<sh.length){if(sh[i]!==nd){ds.push(sh[i]);} i++;}
-    var opts=ds.map(function(d){return {t:fmt(d), fb:"No number times itself gives "+fmt(d)+": test the nearby tenths."};});
+    var opts=fmtPairDs(fmt(nd), ds.map(function(d){return {v:d, fb:"No number times itself gives "+fmt(d)+": test the nearby tenths."};}));
     return mcq("Which number is a perfect square?", {t:fmt(nd), fb:"Yes: "+fmt(rd)+" times "+fmt(rd)+" equals "+fmt(nd)+"."}, opts,
       "Only one value is a number times itself: \\("+fmt(rd)+" \\times "+fmt(rd)+" = "+fmt(nd)+"\\). The perfect square is <b>"+fmt(nd)+"</b>.",
       {mode:"decimal", n:nd});
@@ -1093,8 +1107,8 @@ E("u2-spot-error", 2, ["6.10"], 2, "gen", function(){
     var n=ri(3,20); var cl=n*n;
     return mcq("A student writes: \\(\\sqrt{"+n+"} = "+cl+"\\) because "+n+" times "+n+" is "+cl+". What error was made?",
       {t:"The student squared the number instead of taking its square root", fb:"Right: squaring and rooting are opposite operations."},
-      [{t:"The student halved the number instead of finding a value that squares to it", fb:"Halving was not used: the work multiplied the number by itself."},
-       {t:"The student placed the decimal point in the wrong position in the answer", fb:"No decimals are involved: the operation itself was reversed."},
+      [{t:"The student halved the number instead of taking its square root", fb:"Halving was not used: the work multiplied the number by itself."},
+       {t:"The student placed the decimal point in the wrong position instead", fb:"No decimals are involved: the operation itself was reversed."},
        {t:"The student rounded the answer to a whole number too early in the work", fb:"Rounding is not the issue: the answer grew instead of shrinking."}],
       "Check the claim by squaring it: \\("+cl+" \\times "+cl+" = "+(cl*cl)+"\\), not "+n+". A square root undoes squaring; it does not square again. The error was <b>squaring the number instead of taking its square root</b>.",
       {mode:"squared-instead", n:n});
@@ -1102,9 +1116,9 @@ E("u2-spot-error", 2, ["6.10"], 2, "gen", function(){
   var a=ri(3,11); var b=ri(3,11); var R=a*a+b*b; var claim=a+b;
   return mcq("A student writes: \\(\\sqrt{"+(a*a)+"+"+(b*b)+"} = "+a+"+"+b+" = "+claim+"\\). What error was made?",
     {t:"The student took the root of each part separately before adding", fb:"Right: the root applies to the whole sum, not to each part."},
-    [{t:"The student halved the sum instead of finding a value that squares to it", fb:"Halving was not used: the roots were taken part by part."},
-     {t:"The student squared the sum instead of taking the root of the whole sum", fb:"Squaring was not used: each part was rooted on its own."},
-     {t:"The student placed the decimal point in the wrong position in the answer", fb:"No decimals are involved: the root was split across the sum."}],
+    [{t:"The student halved the sum instead of finding its square root", fb:"Halving was not used: the roots were taken part by part."},
+     {t:"The student squared the sum instead of taking the root of the sum", fb:"Squaring was not used: each part was rooted on its own."},
+     {t:"The student placed the decimal point in the wrong position instead", fb:"No decimals are involved: the root was split across the sum."}],
     "Add first: \\("+(a*a)+"+"+(b*b)+" = "+R+"\\), and \\("+claim+" \\times "+claim+" = "+(claim*claim)+"\\), not "+R+". The error was <b>taking the root of each part separately before adding</b>.",
     {mode:"split-root", a:a, b:b});
 }, ["Test the claim by squaring the answer the student gave.", "Square the claimed root: if it does not give the starting number, name the step that went wrong."]);
@@ -1255,27 +1269,27 @@ E("u2-reasoning-var", 2, ["3.3","6.10"], 3, "var", varset([
   function(){
     return mcq("Rina claims that 0.81 is a perfect square because 81 is a perfect square and the digits are the same. Which option judges her claim correctly?",
       {t:"The claim is correct, because 0.9 times 0.9 equals 0.81", fb:"Right: a decimal is a perfect square when a number squares to it."},
-      [{t:"The claim is wrong, because decimals can never be perfect squares", fb:"Decimals can be squares: check 0.9 times 0.9 for yourself."},
+      [{t:"The claim is wrong, because decimals can never be squares", fb:"Decimals can be squares: check 0.9 times 0.9 for yourself."},
        {t:"The claim is wrong, because 0.81 divided by 2 is not whole", fb:"Halving is not the test: the test is multiplying a number by itself."},
-       {t:"The claim is correct, because 81 divided by 100 is a whole number", fb:"The result is right but that reason fails: 81 over 100 is not whole."}],
+       {t:"The claim is correct, because 81 over 100 is a whole number", fb:"The result is right but that reason fails: 81 over 100 is not whole."}],
       "\\(0.9 \\times 0.9 = 0.81\\), so a number times itself gives 0.81. The correct judgement is <b>the claim is correct, because 0.9 times 0.9 equals 0.81</b>.",
       {mode:"static-decimal-claim"});
   },
   function(){
     return mcq("Dev claims that \\("+FR(18,49)+"\\) is a perfect square because 49 is a perfect square. Which option judges his claim correctly?",
       {t:"The claim is wrong, because 18 is not a perfect square", fb:"Right: both the top and the bottom must be perfect squares."},
-      [{t:"The claim is correct, because 49 is a perfect square on its own", fb:"One part being a square is not enough: check the top part too."},
-       {t:"The claim is wrong, because fractions can never be perfect squares", fb:"Fractions can be squares when both parts are square numbers."},
-       {t:"The claim is correct, because 18 is close to the square number 16", fb:"Close is not equal: 18 itself would have to be a square."}],
+      [{t:"The claim is correct, because 49 is a perfect square", fb:"One part being a square is not enough: check the top part too."},
+       {t:"The claim is wrong, because fractions can never be squares", fb:"Fractions can be squares when both parts are square numbers."},
+       {t:"The claim is correct, because 18 is close to the square 16", fb:"Close is not equal: 18 itself would have to be a square."}],
       "A fraction is a perfect square only when its top and bottom are both perfect squares. Here 49 is a square but 18 is not. The correct judgement is <b>the claim is wrong, because 18 is not a perfect square</b>.",
       {mode:"static-fraction-claim"});
   },
   function(){
     return mcq("Tess estimates \\(\\sqrt{48}\\) as 24, saying she halved 48 to undo the square. Which option judges her method correctly?",
       {t:"The method is wrong: 48 lies between 36 and 49, so the root lies between 6 and 7", fb:"Right: benchmark squares give the range, and halving is not rooting."},
-      [{t:"The method is right: halving a number always gives its square root", fb:"Test it on 16: halving gives 8, but the square root is 4."},
-       {t:"The method is wrong: the root of 48 is exactly 7 since 48 rounds to 49", fb:"Rounding the starting number does not make the root exact."},
-       {t:"The method is right: 24 times 24 is close enough to 48 for an estimate", fb:"24 squared is 576, which is nowhere near 48 at all."}],
+      [{t:"The method is right: halving a number always gives its square root exactly", fb:"Test it on 16: halving gives 8, but the square root is 4."},
+       {t:"The method is wrong: the root of 48 is exactly 7 itself since 48 rounds to 49", fb:"Rounding the starting number does not make the root exact."},
+       {t:"The method is right: 24 times 24 is close enough to 48 for an estimate here", fb:"24 squared is 576, which is nowhere near 48 at all."}],
       "Benchmark squares give \\(36 < 48 < 49\\), so \\(6 < \\sqrt{48} < 7\\), and halving never undoes squaring. The correct judgement is <b>the method is wrong: the root lies between 6 and 7</b>.",
       {mode:"static-estimate-flaw"});
   }
@@ -1476,6 +1490,7 @@ E("u3-zero-exponent", 3, ["3.9"], 2, "gen", function () {
     { v: a2, fb: "That keeps the base as the answer. A zero exponent gives one." },
     { v: -1, fb: "That has the wrong sign. A zero exponent gives positive one." }
   ]);
+  if (Math.abs(a2 - Math.round(a2)) > 1e-9) { for (var zi = 0; zi < ds2.length; zi++) { if (ds2[zi].t === "0") { ds2[zi].t = "0.0"; break; } } }
   return mcq("Evaluate \\(" + shownA + "\\).",
     { t: "1", fb: "Correct. Any nonzero base to the power zero equals one." }, ds2,
     "A power with exponent \\(0\\) and a nonzero base equals \\(1\\): \\[ \\begin{aligned} " + shownA + " &= 1 \\end{aligned} \\] So the value is <b>1</b>.",
@@ -1703,9 +1718,9 @@ E("u3-explanations-var", 3, ["3.5", "3.8"], 3, "var", varset([
     return mcq("Which explanation shows why \\(2^{3}\\) and \\(3^{2}\\) have different values?",
       { t: "\\(2^{3}=2\\times 2\\times 2=8\\) while \\(3^{2}=3\\times 3=9\\)", fb: "Correct. The repeated multiplication is different in each power." },
       [
-        { t: "\\(2^{3}=2\\times 3=6\\) while \\(3^{2}=3\\times 2=6\\), so they match", fb: "That multiplies the base by the exponent in each power." },
-        { t: "\\(2^{3}=3\\times 3=9\\) while \\(3^{2}=2\\times 2=4\\), giving 9 and 4", fb: "That repeats the exponent instead of the base." },
-        { t: "\\(2^{3}\\) and \\(3^{2}\\) both equal 8 because the digits are the same", fb: "That keeps one value and ignores the second power." }
+        { t: "\\(2^{3}=2\\times 3=6\\) while \\(3^{2}=3\\times 2=6\\)", fb: "That multiplies the base by the exponent in each power." },
+        { t: "\\(2^{3}=3\\times 3=9\\) while \\(3^{2}=2\\times 2=4\\)", fb: "That repeats the exponent instead of the base." },
+        { t: "Both powers equal 8 because the digits are the same", fb: "That keeps one value and ignores the second power." }
       ],
       "Write each power as repeated multiplication: \\[ \\begin{aligned} 2^{3} &= 2\\times 2\\times 2 = 8 \\\\ 3^{2} &= 3\\times 3 = 9 \\end{aligned} \\] So the correct explanation is <b>\\(2^{3}=2\\times 2\\times 2=8\\) while \\(3^{2}=3\\times 3=9\\)</b>.",
       { mode: "explain-interchanged" });
@@ -1714,9 +1729,9 @@ E("u3-explanations-var", 3, ["3.5", "3.8"], 3, "var", varset([
     return mcq("Which statement explains the difference between \\((-3)^{2}\\) and \\(-3^{2}\\)?",
       { t: "In \\((-3)^{2}\\) the base is \\(-3\\), giving 9; in \\(-3^{2}\\) only 3 is squared, giving -9", fb: "Correct. The brackets change what the base is." },
       [
-        { t: "Both equal 9 because squaring always makes a value positive in every case", fb: "That overlooks the negative sign sitting outside the second power." },
-        { t: "Both equal -9 because the negative sign always stays with the answer", fb: "That overlooks the brackets making negative three the base in the first." },
-        { t: "In \\((-3)^{2}\\) the answer is -9 and in \\(-3^{2}\\) the answer is 9", fb: "That reverses the two results. Check each base carefully." }
+        { t: "Both equal 9 because squaring always makes a value positive in every single case", fb: "That overlooks the negative sign sitting outside the second power." },
+        { t: "Both equal -9 because the negative sign always stays with the answer in both powers", fb: "That overlooks the brackets making negative three the base in the first." },
+        { t: "In \\((-3)^{2}\\) the answer is -9 and in \\(-3^{2}\\) the answer is 9, swapped around", fb: "That reverses the two results. Check each base carefully." }
       ],
       "In the first power the brackets make \\(-3\\) the base: \\[ \\begin{aligned} (-3)^{2} &= (-3)\\times (-3) = 9 \\\\ -3^{2} &= -(3\\times 3) = -9 \\end{aligned} \\] So the correct statement is <b>In \\((-3)^{2}\\) the base is \\(-3\\), giving 9; in \\(-3^{2}\\) only 3 is squared, giving -9</b>.",
       { mode: "explain-parentheses" });
@@ -2159,9 +2174,10 @@ E("u1-ooo-brackets-mc", 1, ["6.2"], 2, "gen", function () {
     { t: fmt(u1round(P.E3, 2)), fb: "This adds " + fmt(P.f) + " before the final division, but division is done before addition." },
     { t: fmt(u1round(P.E4, 2)), fb: "This adds the bracket amount to " + fmt(P.a) + " instead of subtracting it, a sign slip." }
   ];
+  var selDs = fmtPairDs(fmt(P.V), shuffle(errs).slice(0, 3).map(function (e) { return { v: parseFloat(e.t), fb: e.fb }; }));
   return mcq(prompt,
     { t: fmt(P.V), fb: "Correct. The inner brackets are done first, then divisions and multiplications from left to right." },
-    shuffle(errs).slice(0, 3),
+    selDs,
     solution, { mode: "ooo-brackets", a: P.a, c: P.c, d: P.d, e: P.e, f: P.f, g: P.g });
 }, ["Do the innermost brackets first, then work divisions and multiplications from left to right.", "First add the fraction and the decimal inside the inner brackets."]);
 
@@ -2326,7 +2342,7 @@ E("u2-sqrt-fraction", 2, ["6.9"], 1, "gen", function(){
   }
   var k=ri(3,39); var rd=u2r1(k/10); var nd=u2r2(rd*rd);
   var dc=u2d3(rd,[u2r1(rd+0.1),u2r1(rd-0.1),u2r1(rd*2),u2r1(rd+0.2),u2r1(rd/2),u2r1(rd+1)]);
-  var dopts=dc.map(function(d){return {t:fmt(d), fb:fmt(d)+" squared is "+fmt(u2r2(d*d))+", not "+fmt(nd)+": try another tenth."};});
+  var dopts=fmtPairDs(fmt(rd), dc.map(function(d){return {v:d, fb:fmt(d)+" squared is "+fmt(u2r2(d*d))+", not "+fmt(nd)+": try another tenth."};}));
   return mcq("What is \\(\\sqrt{"+fmt(nd)+"}\\)? Give the exact value.", {t:fmt(rd), fb:"Yes: "+fmt(rd)+" times "+fmt(rd)+" equals "+fmt(nd)+"."}, dopts,
     "Find the decimal that multiplies by itself to give "+fmt(nd)+": \\[ \\begin{aligned} "+fmt(rd)+" \\times "+fmt(rd)+" &= "+fmt(nd)+" \\\\ \\sqrt{"+fmt(nd)+"} &= "+fmt(rd)+" \\end{aligned} \\] The square root is <b>"+fmt(rd)+"</b>.",
     {mode:"decimal", n:nd});
@@ -2361,7 +2377,8 @@ E("u2-number-from-root", 2, ["6.11"], 2, "gen", function(){
     {v:u2r2(nd+0.1), fb:"That is a little more than the squared root: multiply the root by itself exactly."}
   ];
   var dopts=[], seen2={};
-  for(var j=0;j<cands2.length&&dopts.length<3;j++){var v=cands2[j].v; if(v!==nd&&v>0&&!seen2[v]){seen2[v]=1;dopts.push({t:fmt(v), fb:cands2[j].fb});}}
+  for(var j=0;j<cands2.length&&dopts.length<3;j++){var v=cands2[j].v; if(v!==nd&&v>0&&!seen2[v]){seen2[v]=1;dopts.push({v:v, fb:cands2[j].fb});}}
+  dopts=fmtPairDs(fmt(nd), dopts);
   return mcq("A positive number has square root "+fmt(rd)+". What is the number?", {t:fmt(nd), fb:"Yes: "+fmt(rd)+" times "+fmt(rd)+" equals "+fmt(nd)+"."}, dopts,
     "Squaring undoes a square root: \\[ \\begin{aligned} "+fmt(rd)+"^{2} &= "+fmt(rd)+" \\times "+fmt(rd)+" \\\\ &= "+fmt(nd)+" \\end{aligned} \\] The number is <b>"+fmt(nd)+"</b>.",
     {mode:"decimal", r:rd});
@@ -2417,8 +2434,8 @@ E("u2-approx-explain-gen", 2, ["6.7"], 2, "gen", function(){
   else {prompt="For a project, a student uses "+shS+" as the value of \\(\\sqrt{"+N+"}\\). Why is "+shS+" called an approximation?";}
   return mcq(prompt,
     {t:"Squaring "+shS+" does not give exactly "+N+", because the true root continues past the digits shown", fb:"Right: "+shS+" squared is "+fmt(sq)+", close to "+N+" but not equal to it."},
-    [{t:"The calculator made an arithmetic error while it worked out the root of "+N+", so its digits cannot be trusted", fb:"The calculator works properly: the limit is how many digits can be shown."},
-     {t:"The value is exact, because a root shown to "+places+" decimal places has every one of its digits given in full", fb:"More places still means rounded: the digits of this root continue past them."},
+    [{t:"The calculator made an arithmetic error working out the root of "+N+", so its digits cannot be trusted", fb:"The calculator works properly: the limit is how many digits can be shown."},
+     {t:"The value is exact, because a root shown to "+places+" decimal places has all of its digits given in full", fb:"More places still means rounded: the digits of this root continue past them."},
      {t:"The number "+N+" has no square root at all, so the screen can only show a rough guess in its place", fb:N+" does have a square root: it just never ends or repeats as a decimal."}],
     "The shown value is rounded, and squaring it shows the gap: \\[ \\begin{aligned} ("+shS+")^{2} &= "+fmt(sq)+" \\\\ &\\ne "+N+" \\end{aligned} \\] Because its square is not exactly "+N+", the shown value is <b>an approximation, not the exact root</b>.",
     {mode:frame, N:N, places:places});
@@ -3308,7 +3325,7 @@ E("u5-verify-error", 5, ["8.20"], 2, "gen", function () {
     var promptA = "A student checks whether \\(x = " + fmt(w) + "\\) solves \\(" + u5lin(a, b) + " = " + fmt(c) + "\\). The student substitutes and correctly gets a left side of " + fmt(trueL) + ", then writes: this matches, so \\(x = " + fmt(w) + "\\) is the solution. Give the correct conclusion about this check.";
     var corrA = "The arithmetic is correct, but " + fmt(trueL) + " does not equal " + fmt(c) + ", so \\(x = " + fmt(w) + "\\) is not the solution.";
     var dsA = [
-      { t: "The check is fully correct, and \\(x = " + fmt(w) + "\\) is the solution of the equation.", fb: "Look again at the two values: the left side and the right side are different numbers." },
+      { t: "The check is fully correct, and \\(x = " + fmt(w) + "\\) is the solution of the equation, exactly as written.", fb: "Look again at the two values: the left side and the right side are different numbers." },
       { t: "The substitution has an arithmetic slip, and fixing it shows \\(x = " + fmt(w) + "\\) is the solution.", fb: "The substitution itself was worked out correctly; the mistake is in the conclusion drawn from it." },
       { t: "Any value that is substituted into an equation is automatically a solution of it.", fb: "Substitution is only the test; the value is a solution only when both sides come out equal." }
     ];
@@ -3319,9 +3336,9 @@ E("u5-verify-error", 5, ["8.20"], 2, "gen", function () {
   var promptB = "A student checks whether \\(x = " + fmt(w) + "\\) solves \\(" + u5lin(a, b) + " = " + fmt(c) + "\\). The student writes the left side as " + fmt(fakeL) + " and concludes that \\(x = " + fmt(w) + "\\) is the solution. Give the correct conclusion about this check.";
   var corrB = "There is an arithmetic slip: the left side is really " + fmt(trueL) + ", not " + fmt(c) + ", so \\(x = " + fmt(w) + "\\) is not the solution.";
   var dsB = [
-    { t: "The check is fully correct, and \\(x = " + fmt(w) + "\\) is the solution of the equation.", fb: "Redo the substitution yourself: the left side does not come out to the value the student wrote." },
-    { t: "The arithmetic is correct, but the two sides are still not equal, so it is not the solution.", fb: "The stated left side is wrong; recomputing the substitution gives a different value." },
-    { t: "Any value that is substituted into an equation is automatically a solution of it.", fb: "Substitution is only the test; the value is a solution only when both sides come out equal." }
+    { t: "The check is fully correct, and \\(x = " + fmt(w) + "\\) is the solution of the equation, with both sides equal.", fb: "Redo the substitution yourself: the left side does not come out to the value the student wrote." },
+    { t: "The arithmetic is correct, but the two sides are still not equal, so it is not the solution here.", fb: "The stated left side is wrong; recomputing the substitution gives a different value." },
+    { t: "Any value that is substituted into an equation is automatically a solution of it in every case.", fb: "Substitution is only the test; the value is a solution only when both sides come out equal." }
   ];
   var solB = "Redo the substitution carefully: \\[ \\begin{aligned} " + u5lin(a, b) + " &= " + fmt(a) + "(" + fmt(w) + ")" + (b >= 0 ? "+" + fmt(b) : "-" + fmt(-b)) + " \\\\ &= " + fmt(trueL) + " \\end{aligned} \\] The left side is not " + fmt(c) + ", so the correct conclusion is that <b>" + corrB + "</b>";
   return mcq(promptB, { t: corrB, fb: "Correct: recomputing the substitution exposes the slip and the true left side." }, dsB, solB, { mode: "slip", a: a, b: b, c: c, w: w });
@@ -3332,25 +3349,25 @@ E("u5-meaning-of-solution", 5, ["8.21"], 2, "var", varset([
   function () {
     var sol = "Solve first, then read the answer back into the story: \\[ \\begin{aligned} 8n+5 &= 53 \\\\ 8n &= 48 \\\\ n &= 6 \\end{aligned} \\] Here n counts tickets, so the solution means <b>you can buy 6 tickets for a total of $53</b>.";
     return mcq("Concert tickets cost $8 each, plus a $5 booking fee paid once. The equation \\(8n + 5 = 53\\) models the total cost, and its solution is \\(n = 6\\). What does the solution mean in this situation?", { t: "You can buy 6 tickets for a total of $53.", fb: "Correct: n counts tickets, and 6 makes the total come to $53." }, [
-      { t: "Each ticket costs $6 in the end.", fb: "The 6 counts tickets; the price of one ticket stays $8." },
-      { t: "The booking fee works out to $6.", fb: "The booking fee is the fixed $5; the 6 is the value of n, the number of tickets." },
-      { t: "Six friends each pay a $53 fee.", fb: "The $53 is the single total cost, not a fee paid by each person." }
+      { t: "Each ticket costs $6 in the end today.", fb: "The 6 counts tickets; the price of one ticket stays $8." },
+      { t: "The booking fee works out to $6 in total.", fb: "The booking fee is the fixed $5; the 6 is the value of n, the number of tickets." },
+      { t: "Six friends each pay a $53 fee in all.", fb: "The $53 is the single total cost, not a fee paid by each person." }
     ], sol, { mode: "meaning-tickets" });
   },
   function () {
     var sol = "Solve first, then read the answer back into the story: \\[ \\begin{aligned} 3+2h &= 15 \\\\ 2h &= 12 \\\\ h &= 6 \\end{aligned} \\] Here h counts hours, so the solution means <b>after 6 hours, the temperature reaches 15 degrees</b>.";
     return mcq("A cold morning starts at 3 degrees and the temperature rises 2 degrees each hour. The equation \\(3 + 2h = 15\\) models the temperature, and its solution is \\(h = 6\\). What does the solution mean in this situation?", { t: "After 6 hours, the temperature reaches 15 degrees.", fb: "Correct: h counts hours, and 6 makes the temperature come to 15 degrees." }, [
-      { t: "The temperature rises 6 degrees each hour.", fb: "The rise each hour is the fixed 2 degrees; the 6 is the value of h, the hours." },
-      { t: "The temperature starts at 6 degrees.", fb: "The starting temperature is the fixed 3 degrees; the 6 counts hours." },
-      { t: "It takes 15 hours to reach 6 degrees.", fb: "That swaps the two numbers: 15 is the target temperature and 6 is the hours." }
+      { t: "The temperature rises 6 degrees each hour all day.", fb: "The rise each hour is the fixed 2 degrees; the 6 is the value of h, the hours." },
+      { t: "The temperature starts at 6 degrees early in the morning.", fb: "The starting temperature is the fixed 3 degrees; the 6 counts hours." },
+      { t: "It takes 15 hours to reach a temperature of 6 degrees.", fb: "That swaps the two numbers: 15 is the target temperature and 6 is the hours." }
     ], sol, { mode: "meaning-temp" });
   },
   function () {
     var sol = "Solve first, then read the answer back into the story: \\[ \\begin{aligned} 20+7w &= 62 \\\\ 7w &= 42 \\\\ w &= 6 \\end{aligned} \\] Here w counts weeks, so the solution means <b>after 6 weeks of saving, Mia has $62</b>.";
     return mcq("Mia has $20 saved and adds $7 each week. The equation \\(20 + 7w = 62\\) models her savings, and its solution is \\(w = 6\\). What does the solution mean in this situation?", { t: "After 6 weeks of saving, Mia has $62.", fb: "Correct: w counts weeks, and 6 makes her savings come to $62." }, [
-      { t: "Mia saves $6 each week.", fb: "She saves the fixed $7 each week; the 6 is the value of w, the weeks." },
-      { t: "Mia started with $6 saved.", fb: "She started with the fixed $20; the 6 counts weeks of saving." },
-      { t: "Mia will have $6 after 62 weeks.", fb: "That swaps the two numbers: 62 dollars is the goal and 6 is the weeks." }
+      { t: "Mia saves $6 each week at her job.", fb: "She saves the fixed $7 each week; the 6 is the value of w, the weeks." },
+      { t: "Mia started with $6 saved in a jar.", fb: "She started with the fixed $20; the 6 counts weeks of saving." },
+      { t: "Mia will have $6 saved after 62 weeks.", fb: "That swaps the two numbers: 62 dollars is the goal and 6 is the weeks." }
     ], sol, { mode: "meaning-savings" });
   },
   function () {
@@ -3372,9 +3389,9 @@ E("u5-meaning-of-solution", 5, ["8.21"], 2, "var", varset([
   function () {
     var sol = "Solve first, then read the answer back into the story: \\[ \\begin{aligned} 25+0.5g &= 31 \\\\ 0.5g &= 6 \\\\ g &= 12 \\end{aligned} \\] Here g counts gigabytes of data, so the solution means <b>the customer used 12 GB of data that month</b>.";
     return mcq("A phone plan costs $25 a month plus $0.50 for each gigabyte (GB) of data used. The equation \\(25 + 0.5g = 31\\) models one bill, and its solution is \\(g = 12\\). What does the solution mean in this situation?", { t: "The customer used 12 GB of data that month.", fb: "Correct: g counts gigabytes, and 12 makes the bill come to $31." }, [
-      { t: "The monthly base cost is $12.", fb: "The base cost is the fixed $25; the 12 is the value of g, the gigabytes." },
-      { t: "Data costs $12 for each gigabyte.", fb: "Data costs the fixed $0.50 per gigabyte; the 12 counts gigabytes used." },
-      { t: "The bill covers 12 months of service.", fb: "The equation models a single month; the 12 counts gigabytes, not months." }
+      { t: "The monthly base cost is $12 on the plan.", fb: "The base cost is the fixed $25; the 12 is the value of g, the gigabytes." },
+      { t: "Data costs $12 for each gigabyte of data.", fb: "Data costs the fixed $0.50 per gigabyte; the 12 counts gigabytes used." },
+      { t: "The bill covers 12 months of service in a year.", fb: "The equation models a single month; the 12 counts gigabytes, not months." }
     ], sol, { mode: "meaning-phone" });
   }
 ]), ["Solve or use the given solution, then ask what the variable counts in the story.", "First name what the variable stands for in the story; the solution is that many of those."]);
@@ -3576,41 +3593,41 @@ E("u5-compare-eq-ineq-process", 5, ["8.28"], 3, "var", varset([
   function () {
     var sol = "Both problems divide by \\(-2\\), but only the inequality changes direction: \\[ \\begin{aligned} -2x &= 6 \\\\ x &= -3 \\end{aligned} \\] \\[ \\begin{aligned} -2x &> 6 \\\\ x &< -3 \\end{aligned} \\] So the true statement is that <b>the steps match, but the inequality sign reverses when dividing by a negative</b>.";
     return mcq("Compare solving \\(-2x = 6\\) with solving \\(-2x > 6\\). Which statement about the two processes is true?", { t: "The steps are the same, but the inequality sign reverses when both sides are divided by -2.", fb: "Correct: dividing by a negative reverses an inequality sign, and an equation has no sign to reverse." }, [
-      { t: "The processes are identical in every way, including the final direction of the sign.", fb: "An equation has no inequality sign; only the inequality can reverse, and it does here." },
-      { t: "The equation also reverses something when both sides are divided by -2.", fb: "Equals signs never reverse; the reversal rule belongs to inequalities only." },
-      { t: "Neither problem needs the division step, since -2 can just be dropped.", fb: "The coefficient must be undone in both problems; dropping it changes the value of x." }
+      { t: "The processes are identical in every way, including the final direction of the sign as well.", fb: "An equation has no inequality sign; only the inequality can reverse, and it does here." },
+      { t: "The equation also reverses something of its own when both sides are divided by -2 here.", fb: "Equals signs never reverse; the reversal rule belongs to inequalities only." },
+      { t: "Neither problem needs the division step at all, since -2 can just be dropped from both.", fb: "The coefficient must be undone in both problems; dropping it changes the value of x." }
     ], sol, { mode: "cmp-proc-neg" });
   },
   function () {
     var sol = "The solving steps are identical because the divisor is positive: \\[ \\begin{aligned} 3x &= 12 \\\\ x &= 4 \\end{aligned} \\] \\[ \\begin{aligned} 3x &< 12 \\\\ x &< 4 \\end{aligned} \\] The difference is in the answers, so the true statement is that <b>the processes match, but the equation has one solution and the inequality has a range</b>.";
     return mcq("Compare solving \\(3x = 12\\) with solving \\(3x < 12\\). Which statement about the two processes is true?", { t: "The processes are the same; only the answers differ, one single value versus a range of values.", fb: "Correct: dividing by positive 3 works identically, and the answers differ in kind." }, [
-      { t: "The inequality sign reverses, because every division step reverses an inequality.", fb: "The sign reverses only for a negative divisor; 3 is positive, so no reversal happens." },
-      { t: "The inequality needs an extra step that the equation does not need.", fb: "Both take the same single division step; no extra step is added for the inequality." },
-      { t: "The equation has a range of solutions and the inequality has just one.", fb: "That is backwards: the equation pins x to one value, the inequality allows a range." }
+      { t: "The inequality sign reverses, because every division step reverses an inequality in a problem.", fb: "The sign reverses only for a negative divisor; 3 is positive, so no reversal happens." },
+      { t: "The inequality needs an extra step of its own that the equation does not need at any point.", fb: "Both take the same single division step; no extra step is added for the inequality." },
+      { t: "The equation has a range of solutions stretching on and on, and the inequality has just one.", fb: "That is backwards: the equation pins x to one value, the inequality allows a range." }
     ], sol, { mode: "cmp-proc-pos" });
   },
   function () {
     var sol = "Adding and subtracting behave the same way in both: \\[ \\begin{aligned} x+5 &= 9 \\\\ x &= 4 \\end{aligned} \\] \\[ \\begin{aligned} x+5 &> 9 \\\\ x &> 4 \\end{aligned} \\] No sign reversal happens for addition, so the true statement is that <b>the steps match and the sign direction stays the same</b>.";
     return mcq("Compare solving \\(x + 5 = 9\\) with solving \\(x + 5 > 9\\). Which statement about the two processes is true?", { t: "The steps are the same, and subtracting 5 from both sides leaves the inequality direction unchanged.", fb: "Correct: adding or subtracting the same amount never changes an inequality direction." }, [
-      { t: "The inequality sign reverses when 5 is subtracted from both sides.", fb: "Reversal is tied to multiplying or dividing by a negative, not to subtracting a constant." },
-      { t: "The inequality must be solved by trial, while the equation is solved by inverse operations.", fb: "Both are solved by the same inverse operation here: subtract 5 from both sides." },
-      { t: "The two problems have exactly the same answer, the single value 4.", fb: "The inequality answer is a range of values greater than 4, not the single value 4." }
+      { t: "The inequality sign reverses its direction when 5 is subtracted from both sides of the problem.", fb: "Reversal is tied to multiplying or dividing by a negative, not to subtracting a constant." },
+      { t: "The inequality must be solved by trial alone, while the equation is solved by inverse operations.", fb: "Both are solved by the same inverse operation here: subtract 5 from both sides." },
+      { t: "The two problems have exactly the same final answer, the one single value 4, with nothing more.", fb: "The inequality answer is a range of values greater than 4, not the single value 4." }
     ], sol, { mode: "cmp-proc-add" });
   },
   function () {
     var sol = "Both problems need the x term isolated, and only the inequality flips: \\[ \\begin{aligned} -x &= 4 \\\\ x &= -4 \\end{aligned} \\] \\[ \\begin{aligned} -x &\\le 4 \\\\ x &\\ge -4 \\end{aligned} \\] So the true statement is that <b>dividing by -1 reverses the inequality but leaves the equation answer as one value</b>.";
     return mcq("Compare solving \\(-x = 4\\) with solving \\(-x \\le 4\\). Which statement about the two processes is true?", { t: "Both divide by -1, but only the inequality reverses, changing its direction to greater than or equal to.", fb: "Correct: the hidden coefficient is -1, and dividing by it flips the inequality only." }, [
-      { t: "Neither answer changes direction, because the coefficient of x looks like just a minus sign.", fb: "That minus sign is a coefficient of -1, and dividing by a negative reverses an inequality." },
-      { t: "The equation answer becomes a range and the inequality answer becomes one value.", fb: "That is backwards: equations give one value here, inequalities give a range." },
-      { t: "The inequality keeps its direction because equals parts never flip.", fb: "The whole sign, equals part included, reverses when dividing by a negative number." }
+      { t: "Neither answer changes direction, because the coefficient of x looks like just a minus sign in front.", fb: "That minus sign is a coefficient of -1, and dividing by a negative reverses an inequality." },
+      { t: "The equation answer becomes a range of values and the inequality answer becomes one value only.", fb: "That is backwards: equations give one value here, inequalities give a range." },
+      { t: "The inequality keeps its direction all the way through the working because equals parts never flip at all.", fb: "The whole sign, equals part included, reverses when dividing by a negative number." }
     ], sol, { mode: "cmp-proc-negone" });
   },
   function () {
     var sol = "The boundary value is shared, and the solving steps match: \\[ \\begin{aligned} 5x &= 20 \\\\ x &= 4 \\end{aligned} \\] \\[ \\begin{aligned} 5x &\\ge 20 \\\\ x &\\ge 4 \\end{aligned} \\] So the true statement is that <b>the equation solution is the boundary of the inequality solution, and it is included in it</b>.";
     return mcq("Compare solving \\(5x = 20\\) with solving \\(5x \\ge 20\\). Which statement about the two processes is true?", { t: "The processes match, and the equation solution, 4, is the boundary value of the inequality solution.", fb: "Correct: both divide by 5, and 4 is where the inequality range starts." }, [
-      { t: "The processes differ because the inequality sign reverses when dividing by 5.", fb: "Five is positive, so no reversal happens; the processes are step for step the same." },
-      { t: "The equation solution, 4, is not part of the inequality answer at all.", fb: "The or-equal-to part includes the boundary, so 4 does satisfy the inequality." },
-      { t: "The inequality has no boundary value, since its answer is a range.", fb: "Every inequality range here starts at a boundary value; here it is 4." }
+      { t: "The processes differ because the inequality sign reverses whenever both sides are divided by 5.", fb: "Five is positive, so no reversal happens; the processes are step for step the same." },
+      { t: "The equation solution, 4, is not part of the inequality answer at all and never can be.", fb: "The or-equal-to part includes the boundary, so 4 does satisfy the inequality." },
+      { t: "The inequality has no boundary value at all, since its answer is a range of values instead of one number.", fb: "Every inequality range here starts at a boundary value; here it is 4." }
     ], sol, { mode: "cmp-proc-boundary" });
   }
 ]), ["Solve both problems side by side and watch for the one step where they can differ.", "First do the shared steps; then ask whether a negative divisor appears, because that is the only process difference."]);
@@ -3931,8 +3948,8 @@ E("u6-equation-context", 6, ["7.3"], 2, "var", varset([
       { t: "A plant is 2 cm tall at the first measuring, then grows 3 cm each week. y is its height in centimetres after x weeks.", fb: "Correct. The start value is 2 and the step is 3 each week." },
       [
         { t: "A plant is 3 cm tall at the first measuring, then grows 2 cm each week. y is its height in centimetres after x weeks.", fb: "That situation gives y = 2x + 3: the start and step are swapped." },
-        { t: "A full tank holds 2 L of water and drains 3 L each hour. y is the water left after x hours.", fb: "Draining makes y decrease, but the equation has y growing by 3 each step." },
-        { t: "A store sells notebooks for $3 each and pens for $2 each. y is the cost of x notebooks and x pens.", fb: "That cost is 3x + 2x, which is 5x, with no start value added once." }
+        { t: "A full tank holds 2 L of water and drains 3 L each hour until it is empty. y is the water left after x hours.", fb: "Draining makes y decrease, but the equation has y growing by 3 each step." },
+        { t: "A store sells notebooks for $3 each and pens for $2 each. y is the cost of x notebooks and x pens bought together.", fb: "That cost is 3x + 2x, which is 5x, with no start value added once." }
       ],
       "In \\(y = 3x + 2\\), the start value is 2 and the step is +3 for each increase of 1 in \\(x\\): \\[ \\begin{aligned} y &= 2 + 3x \\end{aligned} \\] So the matching situation is <b>the plant that starts at 2 cm and grows 3 cm each week</b>.",
       { mode: "eq-context-plant" });
@@ -3953,8 +3970,8 @@ E("u6-equation-context", 6, ["7.3"], 2, "var", varset([
       { t: "A jar starts with $7 in it, and $2 is added each week. y is the amount in the jar after x weeks.", fb: "Correct. The start value is 7 and the step is 2 each week." },
       [
         { t: "A jar starts with $2 in it, and $7 is added each week. y is the amount in the jar after x weeks.", fb: "That situation gives y = 7x + 2: the start and step are swapped." },
-        { t: "A rope 7 m long is cut into pieces of 2 m each. y is the number of pieces cut from x ropes.", fb: "That count depends on division, and it has no start value of 7 added once." },
-        { t: "A class buys 2 markers for each of x students and 7 markers for each of x teachers. y is the total number of markers.", fb: "That total is 2x + 7x, which is 9x, with no start value added once." }
+        { t: "A rope 7 m long is cut into pieces of 2 m each. y is the number of pieces cut from x ropes in total.", fb: "That count depends on division, and it has no start value of 7 added once." },
+        { t: "A class buys 2 markers for each of x students and 7 for each of x teachers. y is the total markers.", fb: "That total is 2x + 7x, which is 9x, with no start value added once." }
       ],
       "In \\(y = 2x + 7\\), the start value is 7 and the step is +2 for each increase of 1 in \\(x\\): \\[ \\begin{aligned} y &= 7 + 2x \\end{aligned} \\] So the matching situation is <b>the jar that starts with $7 and gains $2 each week</b>.",
       { mode: "eq-context-jar" });
@@ -3964,8 +3981,8 @@ E("u6-equation-context", 6, ["7.3"], 2, "var", varset([
       { t: "A tank holds 1 L of water and is filled at 4 L each minute. y is the amount of water after x minutes.", fb: "Correct. The start value is 1 and the step is 4 each minute." },
       [
         { t: "A tank holds 4 L of water and is filled at 1 L each minute. y is the amount of water after x minutes.", fb: "That situation gives y = x + 4: the start and step are swapped." },
-        { t: "A cake is shared equally among 4 friends, and 1 extra slice is saved. y is the size of each share when the cake has x slices.", fb: "Sharing is division, and the shares get smaller as x grows, unlike this equation." },
-        { t: "A gym sells 4 passes in the morning and 1 pass each hour after that. y is the passes sold after x hours, counting the morning as hour one.", fb: "That wording makes the 4 a one-time amount for the morning, which swaps the roles of 4 and 1." }
+        { t: "A cake is shared equally among 4 friends, and 1 extra slice is saved for later. y is the size of each share.", fb: "Sharing is division, and the shares get smaller as x grows, unlike this equation." },
+        { t: "A gym sells 4 passes in the morning and 1 pass each hour after that. y is the passes sold after x hours.", fb: "That wording makes the 4 a one-time amount for the morning, which swaps the roles of 4 and 1." }
       ],
       "In \\(y = 4x + 1\\), the start value is 1 and the step is +4 for each increase of 1 in \\(x\\): \\[ \\begin{aligned} y &= 1 + 4x \\end{aligned} \\] So the matching situation is <b>the tank that starts with 1 L and fills at 4 L each minute</b>.",
       { mode: "eq-context-tank" });
@@ -3975,8 +3992,8 @@ E("u6-equation-context", 6, ["7.3"], 2, "var", varset([
       { t: "A bus has 3 passengers at its first stop, and 6 more passengers board at each stop after that. y is the number of passengers after x stops.", fb: "Correct. The start value is 3 and the step is 6 at each stop." },
       [
         { t: "A bus has 6 passengers at its first stop, and 3 more passengers board at each stop after that. y is the number of passengers after x stops.", fb: "That situation gives y = 3x + 6: the start and step are swapped." },
-        { t: "A baker packs 6 rolls in each box and keeps 3 boxes aside. y is the number of rolls in x boxes.", fb: "That count is 6x with 3 boxes, not 3 rolls, held back; the equation adds 3 once to y." },
-        { t: "A team scores 6 points for each of x games and 3 points for each of x practices. y is the total points.", fb: "That total is 6x + 3x, which is 9x, with no start value added once." }
+        { t: "A baker packs 6 rolls in each box and keeps 3 boxes aside. y is the number of rolls in x boxes that are packed for sale each day.", fb: "That count is 6x with 3 boxes, not 3 rolls, held back; the equation adds 3 once to y." },
+        { t: "A team scores 6 points for each of x games and 3 points for each of x practices. y is the total points scored by the team.", fb: "That total is 6x + 3x, which is 9x, with no start value added once." }
       ],
       "In \\(y = 6x + 3\\), the start value is 3 and the step is +6 for each increase of 1 in \\(x\\): \\[ \\begin{aligned} y &= 3 + 6x \\end{aligned} \\] So the matching situation is <b>the bus that starts with 3 passengers and gains 6 at each stop</b>.",
       { mode: "eq-context-bus" });
@@ -4361,7 +4378,7 @@ E("u7-scale-media-var", 7, ["10.8"], 1, "var", varset([
       [
         { t: "Each 5 cm on the map stands for 1 km on the ground.", fb: "That swaps the two numbers in the scale." },
         { t: "Each 1 cm on the ground stands for 5 km on the map.", fb: "That reverses the map and the ground." },
-        { t: "The map is 5 times as large as the park.", fb: "A map is a reduction, so it is smaller than the real park." }
+        { t: "The map is 5 times as large as the park it shows.", fb: "A map is a reduction, so it is smaller than the real park." }
       ],
       "In a scale, the map length comes first: 1 cm on the map matches 5 km in real life. So the scale means <b>each 1 cm on the map stands for 5 km on the ground</b>.",
       { mode: "scale-map" });
@@ -4370,9 +4387,9 @@ E("u7-scale-media-var", 7, ["10.8"], 1, "var", varset([
     return mcq("A photo is enlarged with a scale factor of 2. A scale factor compares the image length to the original length. What does scale factor 2 mean for the photo?",
       { t: "Every length in the enlargement is 2 times the matching length in the photo.", fb: "Correct. Scale factor 2 doubles every matching length." },
       [
-        { t: "Every length in the enlargement is 2 cm longer than in the photo.", fb: "A scale factor multiplies lengths; it does not add centimetres." },
+        { t: "Every length in the enlargement is 2 cm longer than in the photo beside it.", fb: "A scale factor multiplies lengths; it does not add centimetres." },
         { t: "Every length in the enlargement is half the matching length in the photo.", fb: "Half would be a scale factor of 0.5, not 2." },
-        { t: "Only the longest side of the photo is doubled.", fb: "A scale factor applies to every length, not just one side." }
+        { t: "Only the longest side of the photo is doubled in the printed copy shown.", fb: "A scale factor applies to every length, not just one side." }
       ],
       "The scale factor multiplies every length: \\[ \\begin{aligned} \\text{image length} &= 2 \\times \\text{original length} \\end{aligned} \\] So <b>every length in the enlargement is 2 times the matching length in the photo</b>.",
       { mode: "scale-photo" });
@@ -4383,7 +4400,7 @@ E("u7-scale-media-var", 7, ["10.8"], 1, "var", varset([
       [
         { t: "Each 1 cm on the blueprint stands for 2 m in the real classroom.", fb: "That swaps the two numbers in the scale." },
         { t: "The real classroom is 2 cm long for each metre on the blueprint.", fb: "That mixes up which length belongs to the drawing." },
-        { t: "The blueprint is larger than the real classroom.", fb: "A blueprint is a reduction, so it is smaller than the room." }
+        { t: "The blueprint is larger than the real classroom it shows.", fb: "A blueprint is a reduction, so it is smaller than the room." }
       ],
       "The first number belongs to the drawing and the second to the real room. So the scale means <b>each 2 cm on the blueprint stands for 1 m in the real classroom</b>.",
       { mode: "scale-blueprint" });
@@ -4405,7 +4422,7 @@ E("u7-scale-media-var", 7, ["10.8"], 1, "var", varset([
       [
         { t: "Every length on the poster is 0.5 cm longer than on the drawing.", fb: "A scale factor multiplies lengths; it does not add centimetres." },
         { t: "Every length on the poster is twice the matching length on the drawing.", fb: "Twice would be a scale factor of 2, not 0.5." },
-        { t: "The poster has half as many sides as the drawing.", fb: "A reduction keeps the same shape; only the lengths change." }
+        { t: "The poster has half as many sides as the drawing it was printed from.", fb: "A reduction keeps the same shape; only the lengths change." }
       ],
       "The image length is the original length times the scale factor: \\[ \\begin{aligned} \\text{image length} &= 0.5 \\times \\text{original length} \\end{aligned} \\] So <b>every length on the poster is half the matching length on the drawing</b>.",
       { mode: "scale-poster" });
@@ -4415,8 +4432,8 @@ E("u7-scale-media-var", 7, ["10.8"], 1, "var", varset([
       { t: "A distance of 1 unit on the map stands for 50 000 units in real life.", fb: "Correct. Both numbers use the same unit, and the real distance is much larger." },
       [
         { t: "A distance of 50 000 units on the map stands for 1 unit in real life.", fb: "That swaps the two numbers in the scale." },
-        { t: "The map is 50 000 times as large as the town.", fb: "A map is a reduction, so it is far smaller than the town." },
-        { t: "Every real distance is 50 000 cm long.", fb: "The scale gives a ratio, not one fixed real distance." }
+        { t: "The map is 50 000 times as large as the town it shows.", fb: "A map is a reduction, so it is far smaller than the town." },
+        { t: "Every real distance is 50 000 cm long, whatever the map shows.", fb: "The scale gives a ratio, not one fixed real distance." }
       ],
       "Read the ratio in order, map first and real life second. So the scale means <b>a distance of 1 unit on the map stands for 50 000 units in real life</b>.",
       { mode: "scale-web-map" });
@@ -4934,7 +4951,7 @@ E("u7-tessellation-var", 7, ["10.3"], 2, "var", varset([
   function () {
     return mcq("A floor is tiled in a checkerboard tessellation of black and white squares. Consider one white square. Which line is a line of symmetry of the whole pattern? A line of symmetry makes the two halves match exactly, colours included.",
       { t: "A vertical line through the centre of the white square", fb: "Correct. Each side mirrors onto squares of the same colour." },
-      [{ t: "A vertical line along the left edge of the white square", fb: "Folding there swaps the white square with a black neighbour, so the colours do not match." }, { t: "A horizontal line along the top edge of the white square", fb: "Folding there swaps the white square with a black neighbour, so the colours do not match." }, { t: "A slanted line through the centre of the white square, tilted 30° from horizontal", fb: "A slanted fold at that angle does not land the squares back on the grid." }],
+      [{ t: "A vertical line along the left edge of the white square", fb: "Folding there swaps the white square with a black neighbour, so the colours do not match." }, { t: "A horizontal line along the top edge of the white square", fb: "Folding there swaps the white square with a black neighbour, so the colours do not match." }, { t: "A slanted line through the centre of the white square", fb: "A slanted fold does not land the squares back on the grid." }],
       "Folding along a line through the centre of the square maps each square onto a square of the same colour, while folding along an edge swaps black and white. So the line of symmetry is <b>a vertical line through the centre of the white square</b>.",
       { mode: "tess-checker" });
   },
@@ -5033,7 +5050,7 @@ E("u7-both-symmetry-var", 7, ["10.11"], 2, "var", varset([
       [
         { t: "A square tile with a pinwheel of four curved blades", fb: "The pinwheel has rotation symmetry, but its curved blades give it no fold line." },
         { t: "A flag with one arrow pointing right across the middle", fb: "The arrow has a horizontal fold line, but no part turn makes it match." },
-        { t: "A poster with a capital letter F in the middle", fb: "The letter F has neither a fold line nor a matching part turn." }
+        { t: "A poster with a capital letter F in the middle of it", fb: "The letter F has neither a fold line nor a matching part turn." }
       ],
       "Only the centred star passes both tests: it folds onto itself and turns onto itself. So the design with both is <b>a round badge with a five-pointed star in the exact centre</b>.",
       { mode: "both-star" });
@@ -5053,9 +5070,9 @@ E("u7-both-symmetry-var", 7, ["10.11"], 2, "var", varset([
     return mcq("Which piece of artwork demonstrates BOTH line symmetry and rotation symmetry?",
       { t: "A paper snowflake with 6 matching points, cut from folded paper", fb: "Correct. It folds along lines through its centre and matches under sixth turns." },
       [
-        { t: "A spiral painted on a dinner plate", fb: "A spiral winds one way, so it has no fold line and no matching part turn." },
-        { t: "A kite with a long tail, drawn from the side", fb: "The kite shape has a fold line along its spine, but no part turn makes it match." },
-        { t: "A pinwheel quilt block with four curved blades", fb: "The pinwheel has rotation symmetry only; its curved blades give it no fold line." }
+        { t: "A spiral painted in rings around the centre of a dinner plate", fb: "A spiral winds one way, so it has no fold line and no matching part turn." },
+        { t: "A kite with a long tail, drawn from the side over a field", fb: "The kite shape has a fold line along its spine, but no part turn makes it match." },
+        { t: "A pinwheel quilt block with four curved blades that swirl", fb: "The pinwheel has rotation symmetry only; its curved blades give it no fold line." }
       ],
       "Only the snowflake passes both tests: folds through the centre and matching part turns. So the piece with both is <b>a paper snowflake with 6 matching points, cut from folded paper</b>.",
       { mode: "both-snowflake" });
@@ -5065,8 +5082,8 @@ E("u7-both-symmetry-var", 7, ["10.11"], 2, "var", varset([
       { t: "It has line symmetry, and rotation symmetry of order 2 with angle 180°", fb: "Correct. Two matches in a full turn give order 2, and 360 divided by 2 is 180." },
       [
         { t: "It has line symmetry, and rotation symmetry of order 4 with angle 90°", fb: "Four matches would be needed for order 4; this design matches twice." },
-        { t: "It has line symmetry only", fb: "Matching twice in a full turn is rotation symmetry, so it has that too." },
-        { t: "It has rotation symmetry of order 2 with angle 180° only", fb: "Folding onto itself along 2 lines is line symmetry, so it has that too." }
+        { t: "It has line symmetry only, with no matching turn about its centre", fb: "Matching twice in a full turn is rotation symmetry, so it has that too." },
+        { t: "It has rotation symmetry of order 2 with angle 180° only, and no fold line", fb: "Folding onto itself along 2 lines is line symmetry, so it has that too." }
       ],
       "Folding gives line symmetry, and the turn count gives the order: \\[ \\begin{aligned} 360° \\div 2 &= 180° \\end{aligned} \\] So the statement is <b>it has line symmetry, and rotation symmetry of order 2 with angle 180°</b>.",
       { mode: "both-features" });
@@ -5402,7 +5419,7 @@ E("u8-chord-perp-bisects", 8, ["9.6"], 2, "gen", function () {
     { t: "\\(AM = MB\\)", fb: "Correct. The perpendicular from the centre bisects the chord, so M is its midpoint." },
     [
       { t: "M is the centre of the circle.", fb: "The centre is O. M is a point on the chord AB." },
-      { t: "\\(OM\\) is longer than the radius \\(OA\\).", fb: "M is inside the circle, so OM is shorter than the radius OA." },
+      { t: "\\(OM = OA\\)", fb: "M is inside the circle, so OM is shorter than the radius OA, not equal to it." },
       { t: "AB passes through the centre O.", fb: "The chord AB sits away from O; only a diameter passes through the centre." }
     ],
     solution, { mode: "chord-perp-bisects", phi: phi, r: r, tilt: tilt });
@@ -5609,7 +5626,7 @@ E("u9-prob-in-media", 9, ["12.1"], 1, "var", varset([
       {t:"A health poster says about 1 in 4 teens will catch a cold this winter", fb:"Right: 1 in 4 states how likely catching a cold is, which is probability in use."},
       [{t:"The clinic is open on weekdays from nine in the morning until five", fb:"That item gives opening hours, with no statement about how likely anything is."},
        {t:"Washing hands with soap helps remove germs picked up during the day", fb:"That item gives health advice, with no statement about chance."},
-       {t:"Two nurses and one doctor work at the clinic on most weekdays", fb:"That item reports a staffing count, with no statement about how likely an event is."}],
+       {t:"Two nurses and one doctor work at the clinic on most weekdays in town", fb:"That item reports a staffing count, with no statement about how likely an event is."}],
       "Probability is used when a statement gives how likely an event is. The item that uses probability is <b>about 1 in 4 teens catching a cold this winter</b>.",
       {mode:"media-health"});
   },
@@ -5664,7 +5681,7 @@ E("u9-assumption-limit", 9, ["12.2"], 2, "var", varset([
   function(){
     return mcq("A poll of 400 voters says a mayor has a 52% chance of winning the town election. Which option states the assumption behind this probability and its limitation?",
       {t:"It assumes the voters polled represent all voters; it fails if whole groups were left out", fb:"Right: a poll speaks for everyone only when the sample matches the whole voting population."},
-      [{t:"It assumes every voter in town answered the poll; it fails if the winner gets under half the votes", fb:"Only 400 voters were polled, so the claim rests on that sample standing for the rest."},
+      [{t:"It assumes every voter answered the poll; it fails if the winner gets under half the votes", fb:"Only 400 voters were polled, so the claim rests on that sample standing for the rest."},
        {t:"It assumes the mayor is the strongest candidate; it fails if another candidate campaigns harder", fb:"Candidate strength is a judgement call, but the stated chance comes from the poll sample."},
        {t:"It assumes the election uses a fair coin to break ties; it fails if no tie happens in the vote", fb:"Tie breaking plays no part here; the chance comes from voters sampled in the poll."}],
       "A poll probability rests on the sample standing for the whole population of voters. The correct statement is <b>it assumes the voters polled represent all voters; it fails if whole groups were left out</b>.",
@@ -5731,8 +5748,8 @@ E("u9-same-number-two-sides", 9, ["12.3"], 2, "var", varset([
     return mcq("A school team won 6 of its 10 games this season. Fans say the team had a strong season. How could critics use the same result to argue the season was weak?",
       {t:"They can say the team failed to win 4 of its 10 games, so it lost ground in most close races", fb:"Right: winning 6 of 10 also means failing to win 4 of 10, and that count supports the critics."},
       [{t:"They can say the team won only 6 of its 20 games, so it won under a third of its games", fb:"That changes the total from 10 to 20, which invents a new result instead of reusing the same one."},
-       {t:"They can say the team practised 10 times a month, so the players trained too little", fb:"Practice counts are a different topic; the critics case must reuse the same 6 of 10 result."},
-       {t:"They can say the team won 10 of its 6 games, so the record book must be wrong", fb:"A count of 10 out of 6 is impossible, and it does not restate the reported result at all."}],
+       {t:"They can say the team practised 10 times a month, so the players trained far too little", fb:"Practice counts are a different topic; the critics case must reuse the same 6 of 10 result."},
+       {t:"They can say the team won 10 of its 6 games, so the record book must be wrong after all", fb:"A count of 10 out of 6 is impossible, and it does not restate the reported result at all."}],
       "One record can support opposing positions by stressing the opposite outcome: winning 6 of 10 also means failing to win 4 of 10. The critics use is <b>the team failed to win 4 of its 10 games</b>.",
       {mode:"twosides-team"});
   },
@@ -5885,7 +5902,7 @@ E("u9-collection-problem", 9, ["11.1"], 2, "var", varset([
       {t:"Privacy, because names link sensitive income answers to each student in the class", fb:"Right: income is sensitive, and names plus reading aloud expose private information."},
       [{t:"Cost, because printing a name line on each survey uses extra ink and paper", fb:"Printing cost is trivial here; the flaw is exposing sensitive answers tied to names."},
        {t:"Use of language, because the income question was worded to push one answer", fb:"No leading wording is described here; the flaw is names attached to sensitive answers."},
-       {t:"Bias, because only students present that day were able to take the survey", fb:"Attendance is not the issue raised here; the flaw is private answers linked to student names."}],
+       {t:"Bias, because only students present that day were able to take the survey form", fb:"Attendance is not the issue raised here; the flaw is private answers linked to student names."}],
       "Collecting sensitive answers with names attached, then reading them aloud, is a privacy problem. The main problem is <b>privacy, because names link sensitive income answers to each student</b>.",
       {mode:"problem-income"});
   },
@@ -5893,8 +5910,8 @@ E("u9-collection-problem", 9, ["11.1"], 2, "var", varset([
     return mcq("A cafeteria survey about favourite meals lists only foods from one cultural tradition and asks all students why they do not eat the foods their families serve at home. What is the main problem with this data collection?",
       {t:"Cultural sensitivity, because the survey treats one tradition as the standard for everyone", fb:"Right: the choices and the question dismiss the food traditions of many families in the school."},
       [{t:"Time and timing, because the survey was handed out right before the lunch bell rang", fb:"Timing is never mentioned here; the flaw is treating one food tradition as the standard."},
-       {t:"Cost, because printing a longer menu list for the survey would cost too much money", fb:"Cost is never raised here; the flaw is a survey built around only one cultural tradition."},
-       {t:"Ethics, because students were promised a free lunch for finishing the survey form", fb:"No promise is mentioned here; the flaw is insensitivity to the traditions families follow."}],
+       {t:"Cost, because printing a longer menu list for the survey would cost too much money overall", fb:"Cost is never raised here; the flaw is a survey built around only one cultural tradition."},
+       {t:"Ethics, because students were promised a free lunch for finishing the survey form early", fb:"No promise is mentioned here; the flaw is insensitivity to the traditions families follow."}],
       "A survey that treats one cultural tradition as the standard for everyone shows a cultural sensitivity problem. The main problem is <b>cultural sensitivity, because the survey treats one tradition as the standard</b>.",
       {mode:"problem-cafeteria"});
   },
@@ -5913,9 +5930,9 @@ E("u9-collection-biggest-threat", 9, ["11.1"], 3, "var", varset([
   function(){
     return mcq("A town website poll about a new pool lets anyone vote as often as they like, and it stays open for one week. Supporters share the link widely on the first day. Which problem most threatens the validity of the results?",
       {t:"Bias, because repeat voting and shared links let one keen group flood the results", fb:"Right: unlimited repeat votes destroy any link between the results and the town as a whole."},
-      [{t:"Time and timing, because a one week window may miss residents who are away", fb:"A short window matters, but repeat flooding can swamp the count far beyond a timing gap."},
-       {t:"Cost, because running a website poll for a full week adds hosting charges", fb:"Hosting cost affects the budget, not whether the counted votes reflect the whole town."},
-       {t:"Use of language, because the poll question is written in short, plain words", fb:"Plain wording is a strength here; the threat is who can vote and how often they can vote."}],
+      [{t:"Time and timing, because a one week window may miss residents who are away then", fb:"A short window matters, but repeat flooding can swamp the count far beyond a timing gap."},
+       {t:"Cost, because running a website poll for a full week adds hosting charges too", fb:"Hosting cost affects the budget, not whether the counted votes reflect the whole town."},
+       {t:"Use of language, because the poll question is written in short, plain words only", fb:"Plain wording is a strength here; the threat is who can vote and how often they can vote."}],
       "Two influences are present, but repeat voting plus link sharing creates bias that can overwhelm every other concern, because the results stop representing the town. The biggest threat is <b>bias, because repeat voting lets one keen group flood the results</b>.",
       {mode:"threat-repeatpoll"});
   },
@@ -5932,17 +5949,17 @@ E("u9-collection-biggest-threat", 9, ["11.1"], 3, "var", varset([
     return mcq("A health survey is costly to print and deliver, and the finished forms, with student names beside sensitive health answers, are pinned on a classroom board for the class to read. Which problem most threatens the validity of the results?",
       {t:"Privacy, because exposed names and health answers will stop students answering honestly", fb:"Right: once answers are public, students hide the truth, so the data itself becomes unreliable."},
       [{t:"Cost, because printing and delivering the survey uses a large share of the budget", fb:"High cost limits how many surveys run, but exposed answers corrupt the answers already given."},
-       {t:"Bias, because only students in that one classroom were given the health survey", fb:"One classroom limits reach, but public exposure changes what students dare to write at all."},
-       {t:"Time and timing, because the survey was pinned up for a full week of classes", fb:"Display length is a side detail; the threat is sensitive answers tied to names in public view."}],
+       {t:"Bias, because only students in that one classroom were given the health survey form", fb:"One classroom limits reach, but public exposure changes what students dare to write at all."},
+       {t:"Time and timing, because the survey was pinned up for a full week of classes at school", fb:"Display length is a side detail; the threat is sensitive answers tied to names in public view."}],
       "Two influences are present, but pinning named health answers in public is a privacy failure that changes how honestly students answer, so the results cannot be trusted. The biggest threat is <b>privacy, because exposed names and health answers will stop honest answers</b>.",
       {mode:"threat-board"});
   },
   function(){
     return mcq("A lunch survey runs during a busy exam week, and its questions treat one cultural food tradition as normal while describing other family foods as unusual choices. Many families skip the survey entirely. Which problem most threatens the validity of the results?",
       {t:"Cultural sensitivity, because offended families skip the survey, so whole groups go missing", fb:"Right: when whole groups refuse, the missing answers bend the results more than a busy week does."},
-      [{t:"Time and timing, because exam week leaves families with little time to reply", fb:"A busy week lowers replies, but offended families are missing for a reason tied to the questions."},
-       {t:"Cost, because reprinting the survey with better questions would cost extra money", fb:"Reprinting cost is a budget issue, not the reason whole groups of families are absent."},
-       {t:"Ethics, because families were offered a small prize draw for returning the survey", fb:"A prize draw is a side detail here; the results fail because the questions drive groups away."}],
+      [{t:"Time and timing, because exam week leaves families with little time to reply to it", fb:"A busy week lowers replies, but offended families are missing for a reason tied to the questions."},
+       {t:"Cost, because reprinting the survey with better questions would cost extra money in the end", fb:"Reprinting cost is a budget issue, not the reason whole groups of families are absent."},
+       {t:"Ethics, because families were offered a small prize draw for returning the survey form", fb:"A prize draw is a side detail here; the results fail because the questions drive groups away."}],
       "Two influences are present, but questions that dismiss family food traditions create a cultural sensitivity failure that removes whole groups from the results. The biggest threat is <b>cultural sensitivity, because offended families skip the survey and whole groups go missing</b>.",
       {mode:"threat-lunchsurvey"});
   },
@@ -5980,7 +5997,7 @@ E("u9-match-influence", 9, ["11.2"], 2, "var", varset([
     return mcq("A survey about weekend activities lists only events from one community group as answer choices, so students from other backgrounds find none of their usual activities listed. Which influence does this situation illustrate?",
       {t:"Cultural sensitivity, because the choices leave out the activities of many backgrounds", fb:"Right: answer choices built around one group overlook the traditions of the wider school."},
       [{t:"Bias, because only students from that one community group were handed the survey", fb:"The survey went to students broadly; the flaw is the choice list, not who received the form."},
-       {t:"Cost, because adding more answer choices would make the survey longer to print", fb:"Printing length is not raised here; the stated flaw is choices that exclude many students."},
+       {t:"Cost, because adding more answer choices would make the survey longer to print out", fb:"Printing length is not raised here; the stated flaw is choices that exclude many students."},
        {t:"Privacy, because students must reveal their weekend activities to their classmates", fb:"Weekend activities here are ordinary choices; the stated flaw is a list missing whole groups."}],
       "When answer choices are built around one group and overlook others, the influence is cultural sensitivity. This situation illustrates <b>cultural sensitivity, because the choices leave out many backgrounds</b>.",
       {mode:"match-cultural"});
@@ -6006,9 +6023,9 @@ E("u9-match-influence", 9, ["11.2"], 2, "var", varset([
   function(){
     return mcq("A school health survey asks students to write their name and any medicines they take on the same form, and classmates pass the finished forms to the front of the room. Which influence does this situation illustrate?",
       {t:"Privacy, because names and medicine details can be seen by classmates handling the forms", fb:"Right: sensitive health details tied to names are exposed as forms pass through many hands."},
-      [{t:"Cost, because printing a name line and a medicine line makes each form longer", fb:"Form length is trivial here; the stated flaw is sensitive details exposed to classmates."},
+      [{t:"Cost, because printing a name line and a medicine line makes each form longer to print", fb:"Form length is trivial here; the stated flaw is sensitive details exposed to classmates."},
        {t:"Time and timing, because passing forms to the front takes time at the end of class", fb:"Passing time is a side detail; the influence shown is private information being visible to others."},
-       {t:"Bias, because students who take medicine may choose to leave the survey blank", fb:"Blank forms could follow, but the influence illustrated is private details seen by classmates."}],
+       {t:"Bias, because students who take medicine may choose to leave the survey blank entirely", fb:"Blank forms could follow, but the influence illustrated is private details seen by classmates."}],
       "When sensitive personal details can be seen by others during collection, the influence is privacy. This situation illustrates <b>privacy, because names and medicine details can be seen by classmates</b>.",
       {mode:"match-privacy"});
   }
@@ -6141,7 +6158,7 @@ E("u9-population-limitation", 9, ["11.5"], 2, "var", varset([
   function(){
     return mcq("A school must decide on Monday whether to hold an outdoor sports day, and wants student views first. Asking all 900 students and counting the answers would take the whole week. Which limitation best explains why a sample is used instead of the whole population?",
       {t:"There is not enough time to ask everyone before the decision has to be made", fb:"Right: the decision deadline arrives before a full count could finish, so time rules it out."},
-      [{t:"The cost of printing a one question survey for the school would use the full budget", fb:"A one question school survey is cheap; the stated limit is the week a full count would take."},
+      [{t:"The cost of printing a one question survey for the school would use the budget", fb:"A one question school survey is cheap; the stated limit is the week a full count would take."},
        {t:"Asking every student the question would destroy the survey forms after one use", fb:"Asking a question destroys nothing; the stated limit is the deadline for the decision itself."},
        {t:"The school owns only two pencils that students could use to mark their answers", fb:"Pencils are not the limit described here; the stated limit is time before the Monday decision."}],
       "When a decision deadline arrives before everyone can be asked, time is the limitation that rules out the whole population. The limitation is <b>there is not enough time to ask everyone before the decision</b>.",
@@ -6189,9 +6206,9 @@ E("u9-generalization-critique", 9, ["11.6"], 3, "var", varset([
   function(){
     return mcq("A school draws 200 student names at random from all grades and surveys them about library use, then claims the results describe library use across the whole school. Which option judges this generalization correctly?",
       {t:"The generalization is reasonable, because a large random sample from all grades can represent the school", fb:"Right: random selection across all grades with 200 students gives the claim a solid sample behind it."},
-      [{t:"The generalization fails, because any sample smaller than the whole school is always invalid", fb:"Samples can support claims when they are large, random and drawn from the whole group studied."},
-       {t:"The generalization fails, because library users were more likely to answer the survey at school", fb:"Names were drawn at random from all grades, so keen users hold no special place in this sample."},
-       {t:"The generalization is reasonable, because the students surveyed all visit the same library room", fb:"Sharing a library room is not the reason; random selection across grades is what supports the claim."}],
+      [{t:"The generalization fails, because any sample smaller than the whole school is always invalid as a rule", fb:"Samples can support claims when they are large, random and drawn from the whole group studied."},
+       {t:"The generalization fails, because library users were more likely to answer the survey at school that day", fb:"Names were drawn at random from all grades, so keen users hold no special place in this sample."},
+       {t:"The generalization is reasonable, because the students surveyed all visit the same library room at school", fb:"Sharing a library room is not the reason; random selection across grades is what supports the claim."}],
       "A generalization is only as good as the sample behind it, and a large random sample drawn from the whole group can support a claim about that group. The correct judgement is <b>the generalization is reasonable, because the sample is large and random</b>.",
       {mode:"critique-random"});
   },
@@ -6336,9 +6353,9 @@ E("u9-self-assessment", 9, ["11.10"], 1, "var", varset([
   function(){
     return mcq("A rubric criterion says a project must select a population or a sample and justify the choice. For the project, a student asked only close friends and gave no reason for choosing them. Which self assessment statement is accurate for this criterion?",
       {t:"My project falls short on this criterion, because I asked only friends and gave no reason for the choice", fb:"Right: the statement honestly matches the criterion to what the project actually did."},
-      [{t:"My project was excellent in every way, and the whole study went very well from start to finish", fb:"General praise names no criterion and no evidence, so it cannot judge this part of the project."},
-       {t:"My project fully meets this criterion, because my friends enjoyed answering all of my questions", fb:"Enjoyment does not justify a sample choice; the criterion asks for a reasoned selection."},
-       {t:"My project had a clear title page and neat charts, so this part of the project is strong", fb:"Titles and charts belong to other criteria; this criterion is about justifying who was asked."}],
+      [{t:"My project was excellent in every way, and the whole study went very well from start to finish overall", fb:"General praise names no criterion and no evidence, so it cannot judge this part of the project."},
+       {t:"My project fully meets this criterion, because my friends enjoyed answering all of my questions in the survey", fb:"Enjoyment does not justify a sample choice; the criterion asks for a reasoned selection."},
+       {t:"My project had a clear title page and neat charts, so this part of the project is strong and well organized", fb:"Titles and charts belong to other criteria; this criterion is about justifying who was asked."}],
       "Self assessment applies the rubric honestly to the work done: the project asked only friends with no justification, so it falls short on this criterion. The accurate statement is <b>my project falls short, because I asked only friends and gave no reason</b>.",
       {mode:"selfassess-sample"});
   },
