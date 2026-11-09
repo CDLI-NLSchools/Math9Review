@@ -836,7 +836,7 @@ E("u1-ooo-calculator", 1, ["6.3"], 1, "gen", function () {
 }, ["Enter the whole expression at once, using bracket keys around grouped parts.", "Do the innermost brackets first if you check the value in stages."]);
 
 // 7. L2, 6.4, CR 2: find the first error in a worked solution, MC.
-E("u1-ooo-first-error", 1, ["6.4"], 1, "gen", function () {
+E("u1-ooo-first-error", 1, ["6.4"], 2, "gen", function () {
   var scen = ri(0, 3);
   var expr, stepTexts, errIdx, correctVal, errExplain;
   if (scen === 0) {
@@ -1078,7 +1078,7 @@ E("u2-root-between", 2, ["6.8"], 1, "gen", function(){
     {mode:"between", a:a, b:b});
 }, ["Square the two given numbers to turn the question into a range for the number itself.", "Check which candidate falls between the two squares you just found."]);
 
-E("u2-spot-error", 2, ["6.10"], 1, "gen", function(){
+E("u2-spot-error", 2, ["6.10"], 2, "gen", function(){
   var mode=ri(1,4);
   if(mode===1){
     var c, R;
@@ -1171,11 +1171,14 @@ E("u2-sa-tri-context", 2, ["9.2"], 2, "gen", function(){
 E("u2-overlap", 2, ["9.1"], 1, "gen", function(){
   var p=ri(2,11), q=ri(2,10);
   var bl=ri(p+2,p+8), bw=ri(q+2,q+8);
-  if(pick(["overlap","hidden"])==="overlap"){
-    return numq("A small box sits on top of a larger box that is "+bl+" cm long and "+bw+" cm wide. The two boxes touch over a rectangle that measures "+p+" cm by "+q+" cm. What is the area of the overlap, in square centimetres?", p*q, 0.01,
-      "The overlap is the rectangle where the boxes touch: \\[ \\begin{aligned} A &= "+p+" \\times "+q+" \\\\ &= "+(p*q)+" \\end{aligned} \\] The area of the overlap is <b>"+(p*q)+" cm\\(^{2}\\)</b>.",
-      {mode:"overlap", p:p, q:q});
-  }
+  return numq("A small box sits on top of a larger box that is "+bl+" cm long and "+bw+" cm wide. The two boxes touch over a rectangle that measures "+p+" cm by "+q+" cm. What is the area of the overlap, in square centimetres?", p*q, 0.01,
+    "The overlap is the rectangle where the boxes touch: \\[ \\begin{aligned} A &= "+p+" \\times "+q+" \\\\ &= "+(p*q)+" \\end{aligned} \\] The area of the overlap is <b>"+(p*q)+" cm\\(^{2}\\)</b>.",
+    {mode:"overlap", p:p, q:q});
+}, ["The overlap is the rectangle where the two solids touch each other.", "Find the area of the touching rectangle first, then think about how many faces it hides."]);
+
+E("u2-overlap-hidden", 2, ["9.1"], 2, "gen", function(){
+  var p=ri(2,11), q=ri(2,10);
+  var bl=ri(p+2,p+8), bw=ri(q+2,q+8);
   return numq("A small box sits on top of a larger box that is "+bl+" cm long and "+bw+" cm wide. The two boxes touch over a rectangle that measures "+p+" cm by "+q+" cm. How much surface area is hidden in total where the two boxes touch, in square centimetres?", 2*p*q, 0.01,
     "The touching rectangle hides one face on each box, so it is hidden twice: \\[ \\begin{aligned} \\text{hidden} &= 2\\times("+p+" \\times "+q+") \\\\ &= 2\\times "+(p*q)+" \\\\ &= "+(2*p*q)+" \\end{aligned} \\] The total hidden surface area is <b>"+(2*p*q)+" cm\\(^{2}\\)</b>.",
     {mode:"hidden-total", p:p, q:q});
@@ -1630,7 +1633,7 @@ E("u3-difference-of-powers", 3, ["3.14"], 1, "gen", function () {
     { mode: "difference-" + mode });
 }, ["Evaluate each power separately before you subtract anything.", "Find the value of the first power, then the second power, then subtract."]);
 
-E("u3-find-the-error", 3, ["3.15"], 1, "gen", function () {
+E("u3-find-the-error", 3, ["3.15"], 2, "gen", function () {
   var tuples = [];
   for (var a = 2; a <= 3; a++) for (var m = 2; m <= 4; m++) for (var n = 2; n <= 4; n++) for (var p = 2; p <= 4; p++) {
     if (m * n === m + n) continue;
@@ -1969,7 +1972,7 @@ E("u4-mult-div-mixed", 4, ["8.12"], 1, "gen", function(){
   return mcq("Multiply: \\(2(3x+4)\\)",{t:u4m(0,6,8),fb:"Correct: the monomial multiplies every term."},[{t:u4m(0,6,4),fb:"The constant was left unmultiplied."},{t:u4m(0,3,8),fb:"The x term was left unmultiplied."},{t:u4m(0,6,-8),fb:"The constant product has the wrong sign."}],"Multiplying every term gives <b>"+u4m(0,6,8)+"</b>.",{mode:"multiply",cr:2});
 }, ["Decide first whether the monomial multiplies or divides, then apply it to every term.", "First apply the operation to the first term, then to each remaining term."]);
 
-E("u4-error-step", 4, ["8.13"], 1, "gen", function(){
+E("u4-error-step", 4, ["8.13"], 2, "gen", function(){
   for(var att=0;att<200;att++){
     var a=ri(3,9),b=ri(2,9),c=ri(2,8),d=ri(2,9);
     if(a-c===0||b-d===0)continue;
@@ -3066,7 +3069,7 @@ E("u4-tiles-figure-build", 4, ["8.15"], 1, "gen", function(){
   return qf;
 }, ["Compare the model expression with the target expression one coefficient at a time and find the one that differs.", "First compare the x squared coefficients, then the x coefficients, then the constants, until you find the single difference."]);
 
-E("u4-match-equivalent", 4, ["8.4"], 1, "gen", function(){
+E("u4-match-equivalent", 4, ["8.4"], 2, "gen", function(){
   for(var att=0;att<300;att++){
     var a=u4nz(-4,4),b=u4nz(-5,5),c=u4nz(-6,6);
     var feas=[];
@@ -4035,7 +4038,7 @@ E("u6-table-equation", 6, ["7.4"], 1, "gen", function () {
 }, ["Find the step first: how much does y change when x grows by 1?", "The start value is the y value when x is 0; extend the pattern back if the table starts later."]);
 
 // 6. L2, 7.4, CR 3: table pattern, value beyond the table.
-E("u6-table-extend", 6, ["7.4"], 1, "gen", function () {
+E("u6-table-extend", 6, ["7.4"], 2, "gen", function () {
   var S = ri(2, 15), P = ri(2, 8), X = ri(8, 15);
   var xs = [0, 1, 2, 3], ys = xs.map(function (x) { return S + P * x; });
   var ans = S + P * X;
@@ -5716,7 +5719,7 @@ E("u9-assumption-limit", 9, ["12.2"], 1, "var", varset([
   }
 ]), ["Every stated probability rests on an assumption: ask what must be true for the number to hold.", "Name what the number counts or is based on first, then ask what could make that basis fail."]);
 
-E("u9-same-number-two-sides", 9, ["12.3"], 1, "var", varset([
+E("u9-same-number-two-sides", 9, ["12.3"], 2, "var", varset([
   function(){
     return mcq("A clinic reports that a treatment helped 7 out of 10 patients. Supporters say most patients improved. How could people who oppose the treatment use the same result to argue their side?",
       {t:"They can say it did not help 3 out of 10 patients, so almost a third saw no benefit", fb:"Right: the same result leaves 3 out of 10 unhelped, and that count supports the other side."},
@@ -7041,6 +7044,7 @@ var CR_MARKS={
  "u2-sa-single": 3,
  "u2-sa-tri-context": 3,
  "u2-overlap": 2,
+ "u2-overlap-hidden": 2,
  "u2-sa-composite-rect": 3,
  "u2-sa-problem": 2,
  "u2-sa-cyl-on-prism": 3,
