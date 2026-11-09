@@ -731,7 +731,7 @@ E("u1-between-two", 1, ["3.2"], 1, "gen", function () {
 }, ["A number between two others is bigger than the smaller one and smaller than the bigger one.", "Compare each choice with both endpoints, one at a time."]);
 
 // 3. L2, 6.1, CR 3: add or subtract fractions in context, answer as a decimal.
-E("u1-frac-context", 1, ["6.1"], 2, "gen", function () {
+E("u1-frac-context", 1, ["6.1"], 1, "gen", function () {
   var dens = [2, 4, 5, 8, 10, 20];
   var d1 = pick(dens), d2 = pick(dens);
   var n1 = ri(1, 15), n2 = ri(1, 15);
@@ -753,7 +753,7 @@ E("u1-frac-context", 1, ["6.1"], 2, "gen", function () {
 }, ["Fractions with different denominators need a common denominator first.", "Rewrite both fractions with the least common denominator, then combine the numerators."]);
 
 // 4. L2, 6.1, CR 3: money with decimals, total cost or change.
-E("u1-money-decimals", 1, ["6.1"], 2, "gen", function () {
+E("u1-money-decimals", 1, ["6.1"], 1, "gen", function () {
   var items = [["notebook", "pen", "snack bar"], ["juice box", "muffin", "apple"], ["poster", "marker set", "sticker pack"], ["bus pass top-up", "coffee", "sandwich"]];
   var set = pick(items);
   if (Math.random() < 0.5) {
@@ -823,7 +823,7 @@ E("u1-ooo-evaluate-mc", 1, ["6.2"], 2, "gen", function () {
 }, ["Do brackets first, then multiplication and division, then addition and subtraction.", "Rewrite the expression after each single step so the order stays clear."]);
 
 // 6. L2, 6.3, CR 2: order of operations with technology, longer decimal expression.
-E("u1-ooo-calculator", 1, ["6.3"], 2, "gen", function () {
+E("u1-ooo-calculator", 1, ["6.3"], 1, "gen", function () {
   var a = ri(20, 200) / 10, b = ri(10, 90) / 10, c = ri(2, 9), d = ri(5, 50) / 10;
   var e = pick([2, 4, 5]);
   var f = ri(5, 60) / 10;
@@ -836,7 +836,7 @@ E("u1-ooo-calculator", 1, ["6.3"], 2, "gen", function () {
 }, ["Enter the whole expression at once, using bracket keys around grouped parts.", "Do the innermost brackets first if you check the value in stages."]);
 
 // 7. L2, 6.4, CR 2: find the first error in a worked solution, MC.
-E("u1-ooo-first-error", 1, ["6.4"], 2, "gen", function () {
+E("u1-ooo-first-error", 1, ["6.4"], 1, "gen", function () {
   var scen = ri(0, 3);
   var expr, stepTexts, errIdx, correctVal, errExplain;
   if (scen === 0) {
@@ -1041,7 +1041,7 @@ E("u2-identify-square", 2, ["3.3"], 1, "gen", function(){
     {mode:"fraction", p:p, q:q});
 }, ["A perfect square is a number multiplied by itself, in whole, decimal or fraction form.", "For each value, ask whether some number times itself gives exactly that value."]);
 
-E("u2-estimate-between", 2, ["6.5"], 2, "gen", function(){
+E("u2-estimate-between", 2, ["6.5"], 1, "gen", function(){
   var n=u2nonSquare(10,400); var k=Math.floor(Math.sqrt(n));
   if(pick(["between","closest"])==="between"){
     var pairs=[[k,k+1],[k-1,k],[k+1,k+2],[k+2,k+3]];
@@ -1058,7 +1058,7 @@ E("u2-estimate-between", 2, ["6.5"], 2, "gen", function(){
     {mode:"closest", n:n});
 }, ["Find the perfect squares just below and just above the number.", "Square the whole numbers near the root and see which squares bracket the number."]);
 
-E("u2-calc-root", 2, ["6.6"], 2, "gen", function(){
+E("u2-calc-root", 2, ["6.6"], 1, "gen", function(){
   var n=u2nonSquare(11,399);
   var ans=u2r1(Math.sqrt(n));
   return numq("Use a calculator. What is \\(\\sqrt{"+n+"}\\), to one decimal place?", ans, 0.05,
@@ -1066,7 +1066,7 @@ E("u2-calc-root", 2, ["6.6"], 2, "gen", function(){
     {mode:"calc", n:n});
 }, ["Enter the number and press the square root key on a calculator.", "Read the display, then round the value to one decimal place."]);
 
-E("u2-root-between", 2, ["6.8"], 2, "gen", function(){
+E("u2-root-between", 2, ["6.8"], 1, "gen", function(){
   var a=ri(2,15); var b=a+1;
   var m=a*a+ri(1,2*a-1);
   var above=b*b+ri(1,12);
@@ -1078,7 +1078,7 @@ E("u2-root-between", 2, ["6.8"], 2, "gen", function(){
     {mode:"between", a:a, b:b});
 }, ["Square the two given numbers to turn the question into a range for the number itself.", "Check which candidate falls between the two squares you just found."]);
 
-E("u2-spot-error", 2, ["6.10"], 2, "gen", function(){
+E("u2-spot-error", 2, ["6.10"], 1, "gen", function(){
   var mode=ri(1,4);
   if(mode===1){
     var c, R;
@@ -1168,7 +1168,7 @@ E("u2-sa-tri-context", 2, ["9.2"], 2, "gen", function(){
     {mode:"bar-box", a:a, b:b, c:c, L:L});
 }, ["Sketch the prism and label every face before you calculate.", "Find the two triangular ends first, then add the rectangles that run along the length."]);
 
-E("u2-overlap", 2, ["9.1"], 2, "gen", function(){
+E("u2-overlap", 2, ["9.1"], 1, "gen", function(){
   var p=ri(2,11), q=ri(2,10);
   var bl=ri(p+2,p+8), bw=ri(q+2,q+8);
   if(pick(["overlap","hidden"])==="overlap"){
@@ -1210,7 +1210,7 @@ E("u2-sa-problem", 2, ["9.3"], 2, "gen", function(){
     {mode:"fabric-cost", l:l2, w:w2, h:h2, price:price});
 }, ["Work out the total surface area before you use the coverage or the price.", "Divide the surface area by the coverage per can, or multiply it by the price per square metre."]);
 
-E("u2-why-approx", 2, ["6.7"], 2, "var", varset([
+E("u2-why-approx", 2, ["6.7"], 1, "var", varset([
   function(){
     return mcq("A calculator shows \\(\\sqrt{2} \\approx 1.414213562\\). Why is the value on the screen an approximation?",
       {t:"Squaring 1.414213562 does not give exactly 2, only very close to 2", fb:"Right: the display is rounded, so its square misses 2 slightly."},
@@ -1391,7 +1391,7 @@ E("u3-evaluate-single-power", 3, ["3.10"], 1, "gen", function () {
   return numq("Evaluate \\(" + shown + "\\).", val, 0, sol, { mode: "evaluate-single", base: base, e: e });
 }, ["Expand the power as repeated multiplication first.", "Multiply the base by itself, using the exponent as the count."]);
 
-E("u3-interchanged-base-exponent", 3, ["3.4", "3.5"], 2, "gen", function () {
+E("u3-interchanged-base-exponent", 3, ["3.4", "3.5"], 1, "gen", function () {
   var tuples = [];
   for (var x = 2; x <= 8; x++) for (var y = 2; y <= 5; y++) {
     if (x === y) continue;
@@ -1443,7 +1443,7 @@ E("u3-interchanged-base-exponent", 3, ["3.4", "3.5"], 2, "gen", function () {
     { mode: "evaluate-interchanged", base: base, exp: exp });
 }, ["Expand both powers as repeated multiplication before you compare or subtract.", "Write out the first power in full, multiplying the base by itself."]);
 
-E("u3-parentheses-sign", 3, ["3.8"], 2, "gen", function () {
+E("u3-parentheses-sign", 3, ["3.8"], 1, "gen", function () {
   var b = ri(2, 9), e = ri(2, 4);
   if (b >= 8 && e === 4) e = 3;
   var form = pick(["bracket", "outside", "inside"]);
@@ -1466,7 +1466,7 @@ E("u3-parentheses-sign", 3, ["3.8"], 2, "gen", function () {
     { mode: "parentheses-" + form, b: b, e: e });
 }, ["Look at what the brackets cover. That tells you what the base is.", "Work out the power part first, then apply the sign the brackets give you."]);
 
-E("u3-zero-exponent", 3, ["3.9"], 2, "gen", function () {
+E("u3-zero-exponent", 3, ["3.9"], 1, "gen", function () {
   var mode = pick(["direct", "direct", "pattern"]);
   if (mode === "pattern") {
     var a = ri(2, 9);
@@ -1497,7 +1497,7 @@ E("u3-zero-exponent", 3, ["3.9"], 2, "gen", function () {
     { mode: "zero-direct", a: a2 });
 }, ["Think about the pattern as the exponent drops by one each time.", "Divide the value of the first power by the base to reach the zero power."]);
 
-E("u3-product-law", 3, ["3.11"], 2, "gen", function () {
+E("u3-product-law", 3, ["3.11"], 1, "gen", function () {
   var a = ri(2, 9), m = ri(2, 6), n = ri(1, 6);
   if (m === 2 && n === 2) n = 3;
   var ds = u3PowDist(a, m + n, [
@@ -1513,7 +1513,7 @@ E("u3-product-law", 3, ["3.11"], 2, "gen", function () {
     { mode: "product-law", a: a, m: m, n: n });
 }, ["Check whether the bases match. Matching bases use the product law.", "Add the two exponents and keep the same base."]);
 
-E("u3-quotient-law", 3, ["3.11"], 2, "gen", function () {
+E("u3-quotient-law", 3, ["3.11"], 1, "gen", function () {
   var a = ri(2, 9), n = ri(1, 4), m = n + ri(2, 5);
   var ds = u3PowDist(a, m - n, [
     { v: m + n, fb: "That adds the exponents. The quotient law subtracts them." },
@@ -1528,7 +1528,7 @@ E("u3-quotient-law", 3, ["3.11"], 2, "gen", function () {
     { mode: "quotient-law", a: a, m: m, n: n });
 }, ["Check whether the bases match. Matching bases use the quotient law.", "Subtract the bottom exponent from the top exponent."]);
 
-E("u3-power-of-power-law", 3, ["3.11"], 2, "gen", function () {
+E("u3-power-of-power-law", 3, ["3.11"], 1, "gen", function () {
   var a = ri(2, 9), m = ri(2, 5), n = ri(2, 4);
   var ds = u3PowDist(a, m * n, [
     { v: m + n, fb: "That adds the exponents. A power of a power multiplies them." },
@@ -1543,7 +1543,7 @@ E("u3-power-of-power-law", 3, ["3.11"], 2, "gen", function () {
     { mode: "power-of-power-law", a: a, m: m, n: n });
 }, ["A power raised to another power is the power of a power law.", "Multiply the inner exponent by the outer exponent."]);
 
-E("u3-two-laws-evaluate", 3, ["3.12"], 2, "gen", function () {
+E("u3-two-laws-evaluate", 3, ["3.12"], 1, "gen", function () {
   var mode = pick(["prod", "quot", "powpow"]);
   var a, expr, val, steps;
   if (mode === "prod") {
@@ -1567,7 +1567,7 @@ E("u3-two-laws-evaluate", 3, ["3.12"], 2, "gen", function () {
     { mode: "two-laws-" + mode, a: a });
 }, ["Use an exponent law to write the expression as one power first.", "Combine the exponents with the matching law, then evaluate that power."]);
 
-E("u3-power-of-product-quotient", 3, ["3.12"], 2, "gen", function () {
+E("u3-power-of-product-quotient", 3, ["3.12"], 1, "gen", function () {
   var mode = pick(["prod", "prod", "quotInt", "quotDec"]);
   if (mode === "prod") {
     var a = ri(2, 6), b = ri(2, 6), n = ri(2, 3);
@@ -1591,7 +1591,7 @@ E("u3-power-of-product-quotient", 3, ["3.12"], 2, "gen", function () {
     { mode: "power-of-quotient-dec", a: dp[0], b: dp[1], n: 2 });
 }, ["Start with the value inside the brackets.", "Calculate inside the brackets, then apply the outside power to that value."]);
 
-E("u3-sum-of-powers", 3, ["3.13"], 2, "gen", function () {
+E("u3-sum-of-powers", 3, ["3.13"], 1, "gen", function () {
   var mode = pick(["same", "diff"]);
   var expr, val, steps;
   if (mode === "same") {
@@ -1610,7 +1610,7 @@ E("u3-sum-of-powers", 3, ["3.13"], 2, "gen", function () {
     { mode: "sum-" + mode });
 }, ["Evaluate each power separately before you add anything.", "Find the value of the first power, then the second power, then add them."]);
 
-E("u3-difference-of-powers", 3, ["3.14"], 2, "gen", function () {
+E("u3-difference-of-powers", 3, ["3.14"], 1, "gen", function () {
   var mode = pick(["same", "diff"]);
   var expr, val, steps;
   if (mode === "same") {
@@ -1630,7 +1630,7 @@ E("u3-difference-of-powers", 3, ["3.14"], 2, "gen", function () {
     { mode: "difference-" + mode });
 }, ["Evaluate each power separately before you subtract anything.", "Find the value of the first power, then the second power, then subtract."]);
 
-E("u3-find-the-error", 3, ["3.15"], 2, "gen", function () {
+E("u3-find-the-error", 3, ["3.15"], 1, "gen", function () {
   var tuples = [];
   for (var a = 2; a <= 3; a++) for (var m = 2; m <= 4; m++) for (var n = 2; n <= 4; n++) for (var p = 2; p <= 4; p++) {
     if (m * n === m + n) continue;
@@ -1816,7 +1816,7 @@ E("u4-expr-to-tiles", 4, ["8.15"], 1, "gen", function(){
   return mcq("Which description matches an algebra tile model of "+u4m(2,-3,4)+"?",{t:u4tiles(2,-3,4),fb:"Correct: each term becomes tiles of that kind and sign."},[{t:u4tiles(2,3,4),fb:"That flips the sign of the x tiles."},{t:u4tiles(2,-3,-4),fb:"That flips the sign of the unit tiles."},{t:u4tiles(-3,2,4),fb:"That swaps the x squared count with the x count."}],"Reading term by term gives <b>"+u4tiles(2,-3,4)+"</b>.",{mode:"expr2tiles",a:2,b:-3,c:4});
 }, ["Match each term of the expression to tiles of the same kind and sign.", "Start with the x squared term: its coefficient tells how many large square tiles, and its sign tells positive or negative."]);
 
-E("u4-equivalent", 4, ["8.4","8.5"], 2, "gen", function(){
+E("u4-equivalent", 4, ["8.4","8.5"], 1, "gen", function(){
   for(var att=0;att<200;att++){
     var a=u4nz(-8,8),b=ri(-8,8),c=u4nz(-8,8),d=ri(-8,8);
     if(b===0&&d===0)continue;
@@ -1833,7 +1833,7 @@ E("u4-equivalent", 4, ["8.4","8.5"], 2, "gen", function(){
   return mcq("Which expression is equivalent to \\(3x+2+5x-4\\)?",{t:u4m(0,8,-2),fb:"Correct: the x terms combine and the constants combine."},[{t:u4m(0,8,6),fb:"The constants were added without their signs."},{t:u4m(0,-2,-2),fb:"The x coefficients were subtracted instead of added."},{t:u4m(0,6,0),fb:"That combines unlike terms into one term."}],"Combining like terms gives <b>"+u4m(0,8,-2)+"</b>.",{mode:"combine",a:3,b:2,c:5,d:-4});
 }, ["Group the x terms together and the constants together, then combine each group.", "First add the two x coefficients, keeping the signs of both numbers."]);
 
-E("u4-add", 4, ["8.6"], 2, "gen", function(){
+E("u4-add", 4, ["8.6"], 1, "gen", function(){
   for(var att=0;att<200;att++){
     var tri=ri(0,1)===1;
     var a1=tri?u4nz(-5,5):0,b1=u4nz(-8,8),c1=u4nz(-8,8);
@@ -1895,7 +1895,7 @@ E("u4-addsub-xy", 4, ["8.11"], 2, "gen", function(){
   return mcq("Add: \\((2x+3y)+(x-2y)\\)",{t:u4mxy(3,1,0),fb:"Correct: x terms, y terms and constants are handled separately."},[{t:u4mxy(3,5,0),fb:"The y coefficients were handled with the wrong sign."},{t:u4mxy(4,1,0),fb:"That combines x and y terms, which are unlike."},{t:u4mxy(2,1,0),fb:"The x coefficients were not added."}],"Combining like terms gives <b>"+u4mxy(3,1,0)+"</b>.",{mode:"xy-add"});
 }, ["Keep x terms, y terms and constants in separate groups; unlike terms stay separate.", "First combine the x coefficients, then do the same for the y coefficients."]);
 
-E("u4-multiply-monomial", 4, ["8.8"], 2, "gen", function(){
+E("u4-multiply-monomial", 4, ["8.8"], 1, "gen", function(){
   for(var att=0;att<200;att++){
     var mode=ri(0,2);
     if(mode===2){
@@ -1921,7 +1921,7 @@ E("u4-multiply-monomial", 4, ["8.8"], 2, "gen", function(){
   return mcq("Multiply: \\(3(2x+5)\\)",{t:u4m(0,6,15),fb:"Correct: the monomial multiplies every term."},[{t:u4m(0,6,5),fb:"The constant was left unmultiplied."},{t:u4m(0,5,15),fb:"The x term was left unmultiplied."},{t:u4m(0,6,-15),fb:"The constant product has the wrong sign."}],"Multiplying every term gives <b>"+u4m(0,6,15)+"</b>.",{mode:"const-times-bi",cr:3});
 }, ["The monomial multiplies every term inside the brackets, not just the first one.", "First multiply the monomial by the first term, then by each remaining term."]);
 
-E("u4-divide-monomial", 4, ["8.9"], 2, "gen", function(){
+E("u4-divide-monomial", 4, ["8.9"], 1, "gen", function(){
   for(var att=0;att<200;att++){
     if(ri(0,1)===0){
       var a=u4nz(-7,7),b=u4nz(-8,8);
@@ -1946,7 +1946,7 @@ E("u4-divide-monomial", 4, ["8.9"], 2, "gen", function(){
   return mcq("Divide: \\((6x+9) \\div 3\\)",{t:u4m(0,2,3),fb:"Correct: every term is divided by the monomial."},[{t:u4m(0,2,9),fb:"The constant was left undivided."},{t:u4m(0,3,6),fb:"That subtracts the divisor from each coefficient."},{t:u4m(0,2,-3),fb:"The constant quotient has the wrong sign."}],"Dividing every term gives <b>"+u4m(0,2,3)+"</b>.",{mode:"div-const",cr:2});
 }, ["Every term of the polynomial is divided by the monomial, one term at a time.", "First divide the first term, then divide each remaining term by the same monomial."]);
 
-E("u4-mult-div-mixed", 4, ["8.12"], 2, "gen", function(){
+E("u4-mult-div-mixed", 4, ["8.12"], 1, "gen", function(){
   for(var att=0;att<200;att++){
     if(ri(0,1)===0){
       var k=pick([-4,-3,-2,2,3,4]);
@@ -1969,7 +1969,7 @@ E("u4-mult-div-mixed", 4, ["8.12"], 2, "gen", function(){
   return mcq("Multiply: \\(2(3x+4)\\)",{t:u4m(0,6,8),fb:"Correct: the monomial multiplies every term."},[{t:u4m(0,6,4),fb:"The constant was left unmultiplied."},{t:u4m(0,3,8),fb:"The x term was left unmultiplied."},{t:u4m(0,6,-8),fb:"The constant product has the wrong sign."}],"Multiplying every term gives <b>"+u4m(0,6,8)+"</b>.",{mode:"multiply",cr:2});
 }, ["Decide first whether the monomial multiplies or divides, then apply it to every term.", "First apply the operation to the first term, then to each remaining term."]);
 
-E("u4-error-step", 4, ["8.13"], 2, "gen", function(){
+E("u4-error-step", 4, ["8.13"], 1, "gen", function(){
   for(var att=0;att<200;att++){
     var a=ri(3,9),b=ri(2,9),c=ri(2,8),d=ri(2,9);
     if(a-c===0||b-d===0)continue;
@@ -2000,7 +2000,7 @@ E("u4-error-step", 4, ["8.13"], 2, "gen", function(){
   return mcq("A student simplified \\((5x+3)-(2x-4)\\) and the first error is in the bracket removal step. In which step does the first error occur?",{t:"Step 1",fb:"Correct: this is the first line that goes wrong."},[{t:"Step 2",fb:"That step follows correctly from the line before it."},{t:"Step 3",fb:"That step follows correctly from the line before it."},{t:"Step 4",fb:"That step follows correctly from the line before it."}],"The first error is in <b>Step 1</b>.",{mode:"error-step",err:1});
 }, ["Check each step against the step before it, in order, and stop at the first line that changes a value.", "First check the bracket removal: every sign in the second polynomial must change."]);
 
-E("u4-equivalent-pair", 4, ["8.10"], 2, "gen", function(){
+E("u4-equivalent-pair", 4, ["8.10"], 1, "gen", function(){
   for(var att=0;att<200;att++){
     var a=u4nz(-8,8),b=u4nz(-8,8);
     var corrT=u4m(0,a,b)+" and \\("+u4expr([[b,""],[a,"x"]])+"\\)";
@@ -2016,7 +2016,7 @@ E("u4-equivalent-pair", 4, ["8.10"], 2, "gen", function(){
   return mcq("Which pair of expressions are equivalent?",{t:u4m(0,3,2)+" and \\(2+3x\\)",fb:"Correct: the two expressions have exactly the same terms."},[{t:u4m(0,3,2)+" and "+u4m(0,3,-2),fb:"The constant changes sign, so they differ."},{t:u4m(0,2,3)+" and "+u4m(0,3,2),fb:"The x coefficient and constant trade places, so they differ."},{t:u4m(0,3,2)+" and "+u4m(0,-3,2),fb:"The x coefficient changes sign, so they differ."}],"The equivalent pair is <b>"+u4m(0,3,2)+" and \\(2+3x\\)</b>.",{mode:"pair"});
 }, ["Simplify or compare each pair term by term: equivalent expressions have identical terms.", "First check one pair: compare its x coefficient and its constant on both sides."]);
 
-E("u4-tiles-addsub", 4, ["8.6","8.7"], 2, "gen", function(){
+E("u4-tiles-addsub", 4, ["8.6","8.7"], 1, "gen", function(){
   for(var att=0;att<200;att++){
     var sub=ri(0,1)===1;
     var a1=ri(-3,3),b1=ri(-4,4),c1=ri(-4,4);
@@ -2182,7 +2182,7 @@ E("u1-ooo-brackets-mc", 1, ["6.2"], 2, "gen", function () {
 }, ["Do the innermost brackets first, then work divisions and multiplications from left to right.", "First add the fraction and the decimal inside the inner brackets."]);
 
 // T2. L2, 6.3: one calculator entry, ask for the displayed rounded value, MC.
-E("u1-ooo-calc-display", 1, ["6.3"], 2, "gen", function () {
+E("u1-ooo-calc-display", 1, ["6.3"], 1, "gen", function () {
   var names = ["Alex", "Jamie", "Robin", "Casey", "Taylor", "Jordan"];
   var P = null;
   for (var tries = 0; tries < 300 && !P; tries++) {
@@ -2348,7 +2348,7 @@ E("u2-sqrt-fraction", 2, ["6.9"], 1, "gen", function(){
     {mode:"decimal", n:nd});
 }, ["For a fraction, root the top and the bottom separately; for a decimal, hunt among the tenths.", "Ask which number, multiplied by itself, gives exactly the value under the root sign."]);
 
-E("u2-number-from-root", 2, ["6.11"], 2, "gen", function(){
+E("u2-number-from-root", 2, ["6.11"], 1, "gen", function(){
   if(pick(["fraction","decimal"])==="fraction"){
     var p=ri(2,12), q=ri(2,12), g=0;
     while(u2gcd(p,q)!==1&&g<60){p=ri(2,12);q=ri(2,12);g++;}
@@ -2384,7 +2384,7 @@ E("u2-number-from-root", 2, ["6.11"], 2, "gen", function(){
     {mode:"decimal", r:rd});
 }, ["Squaring and square roots undo each other, so square the given root.", "Multiply the root by itself, squaring the top and bottom separately for a fraction."]);
 
-E("u2-calc-root-round", 2, ["6.6"], 2, "gen", function(){
+E("u2-calc-root-round", 2, ["6.6"], 1, "gen", function(){
   var isFrac=pick(["whole","fraction"])==="fraction";
   var val, label, rn, rd2;
   if(isFrac){
@@ -2421,7 +2421,7 @@ E("u2-calc-root-round", 2, ["6.6"], 2, "gen", function(){
     {mode:isFrac?"fraction":"whole", val:val});
 }, ["Use a calculator for the root, then round the display to two decimal places.", "Read the third decimal digit: it tells you whether the second decimal stays or rounds up."]);
 
-E("u2-approx-explain-gen", 2, ["6.7"], 2, "gen", function(){
+E("u2-approx-explain-gen", 2, ["6.7"], 1, "gen", function(){
   var N=u2nonSquare(2,99);
   var places=pick([2,3,4]);
   var shown=Math.round(Math.sqrt(N)*Math.pow(10,places))/Math.pow(10,places);
@@ -2657,7 +2657,7 @@ function u3tLayers(a) {
 function u3tFig(q, fig) { q.figure = fig; return q; }
 function u3tPowOpt(a, e) { return "\\(" + a + "^{" + e + "}\\)"; }
 
-E("u3-power-model-var", 3, ["3.4"], 2, "var", varset([
+E("u3-power-model-var", 3, ["3.4"], 1, "var", varset([
   function () {
     var q = mcq("Dot model convention: a square power is modelled as a grid, with the base as the number of dots along one side and the exponent 2 as the two grid dimensions, rows and columns. Which power does this model show?",
       { t: u3tPowOpt(3, 2), fb: "Correct. The side has 3 dots and the grid has 2 dimensions." },
@@ -2756,7 +2756,7 @@ E("u3-power-model-var", 3, ["3.4"], 2, "var", varset([
   }
 ]), ["Read the base from the dots along one side or one layer first.", "Count the dimensions next: a flat grid has two, a layered build has three."]);
 
-E("u3-zero-pattern", 3, ["3.9"], 2, "gen", function () {
+E("u3-zero-pattern", 3, ["3.9"], 1, "gen", function () {
   var mode = pick(["int", "int", "frac", "neg"]);
   var lines = [], baseTxt, lastStep, baseOpt, recipOpt;
   if (mode === "int") {
@@ -2798,7 +2798,7 @@ E("u3-zero-pattern", 3, ["3.9"], 2, "gen", function () {
     { mode: "topup-zero-" + mode });
 }, ["Watch what happens to the value each time the exponent drops by one.", "Take the value of the first power and divide it by the base."]);
 
-E("u3-paren-powers-set", 3, ["3.8"], 2, "gen", function () {
+E("u3-paren-powers-set", 3, ["3.8"], 1, "gen", function () {
   var b = ri(2, 5), e = ri(2, 4);
   var forms = [
     { txt: "(-" + b + ")^{" + e + "}", val: Math.pow(-b, e) },
@@ -2994,7 +2994,7 @@ function u4tArea(m,p,c){
   return s+'</svg>';
 }
 
-E("u4-tiles-figure-expr", 4, ["8.16"], 2, "gen", function(){
+E("u4-tiles-figure-expr", 4, ["8.16"], 1, "gen", function(){
   for(var att=0;att<300;att++){
     var a=ri(-3,3),b=ri(-5,5),c=ri(-5,5);
     var nz=(a!==0?1:0)+(b!==0?1:0)+(c!==0?1:0);
@@ -3023,7 +3023,7 @@ E("u4-tiles-figure-expr", 4, ["8.16"], 2, "gen", function(){
   return qf;
 }, ["Read the picture tile by tile: count each kind and keep the sign shown on the tiles.", "First count the large squares: that count, with its sign, is the x squared coefficient."]);
 
-E("u4-tiles-figure-build", 4, ["8.15"], 2, "gen", function(){
+E("u4-tiles-figure-build", 4, ["8.15"], 1, "gen", function(){
   function kindName(k){return k===0?"x squared":(k===1?"x":"unit");}
   function kindTex(k){return k===0?"x^{2}":(k===1?"x":"\\text{unit}");}
   function tileWord(n){return n===1?"tile":"tiles";}
@@ -3066,7 +3066,7 @@ E("u4-tiles-figure-build", 4, ["8.15"], 2, "gen", function(){
   return qf;
 }, ["Compare the model expression with the target expression one coefficient at a time and find the one that differs.", "First compare the x squared coefficients, then the x coefficients, then the constants, until you find the single difference."]);
 
-E("u4-match-equivalent", 4, ["8.4"], 2, "gen", function(){
+E("u4-match-equivalent", 4, ["8.4"], 1, "gen", function(){
   for(var att=0;att<300;att++){
     var a=u4nz(-4,4),b=u4nz(-5,5),c=u4nz(-6,6);
     var feas=[];
@@ -3289,7 +3289,7 @@ E("u5-inspection-basic", 5, ["8.19"], 1, "gen", function () {
 }, ["Think of the multiplication or division fact hiding in the equation.", "First ask: what number, times the coefficient (or divided by it), gives the right side?"]);
 
 // 5. L2, 8.19: systematic trial with tried values shown.
-E("u5-trial-table", 5, ["8.19"], 2, "gen", function () {
+E("u5-trial-table", 5, ["8.19"], 1, "gen", function () {
   var a = ri(2, 6), x0 = ri(3, 9), b = ri(1, 9);
   var c = a * x0 + b, v1 = a * (x0 - 2) + b, v2 = a * (x0 - 1) + b, v3 = a * (x0 + 1) + b;
   var prompt = "Sam is solving \\(" + u5lin(a, b) + " = " + fmt(c) + "\\) by systematic trial, trying one value at a time. Trying \\(x = " + fmt(x0 - 2) + "\\) gives a left side of " + fmt(v1) + ". Trying \\(x = " + fmt(x0 - 1) + "\\) gives a left side of " + fmt(v2) + ". Which value solves the equation?";
@@ -3345,7 +3345,7 @@ E("u5-verify-error", 5, ["8.20"], 2, "gen", function () {
 }, ["Redo the substitution yourself before judging the student's conclusion.", "First work out the left side with the given value, then compare it with the right side."]);
 
 // 8. L2, 8.21, var: what a solution means in context.
-E("u5-meaning-of-solution", 5, ["8.21"], 2, "var", varset([
+E("u5-meaning-of-solution", 5, ["8.21"], 1, "var", varset([
   function () {
     var sol = "Solve first, then read the answer back into the story: \\[ \\begin{aligned} 8n+5 &= 53 \\\\ 8n &= 48 \\\\ n &= 6 \\end{aligned} \\] Here n counts tickets, so the solution means <b>you can buy 6 tickets for a total of $53</b>.";
     return mcq("Concert tickets cost $8 each, plus a $5 booking fee paid once. The equation \\(8n + 5 = 53\\) models the total cost, and its solution is \\(n = 6\\). What does the solution mean in this situation?", { t: "You can buy 6 tickets for a total of $53.", fb: "Correct: n counts tickets, and 6 makes the total come to $53." }, [
@@ -3469,7 +3469,7 @@ E("u5-possible-solution", 5, ["8.2"], 1, "gen", function () {
 }, ["Substitute each choice into the inequality and keep the one that makes a true statement.", "First check the boundary value itself, then check values on each side of it."]);
 
 // 13. L2, 8.3, CR 2: which list all satisfy an inequality.
-E("u5-list-satisfies", 5, ["8.3"], 2, "gen", function () {
+E("u5-list-satisfies", 5, ["8.3"], 1, "gen", function () {
   for (var att = 0; att < 300; att++) {
     var k = ri(-3, 8), r = pick(["lt", "gt", "le", "ge"]);
     var sat = [], not = [];
@@ -3495,7 +3495,7 @@ E("u5-list-satisfies", 5, ["8.3"], 2, "gen", function () {
 }, ["Test every value in a list; one failing value rules the whole list out.", "First test the boundary value in each list, since it is the one most likely to fail."]);
 
 // 14. L2, 8.24: number line graph to inequality.
-E("u5-graph-to-ineq", 5, ["8.24"], 2, "gen", function () {
+E("u5-graph-to-ineq", 5, ["8.24"], 1, "gen", function () {
   var k = ri(-8, 8), r = pick(["lt", "gt", "le", "ge"]);
   var closed = (r === "le" || r === "ge"), dir = (r === "gt" || r === "ge") ? "right" : "left";
   var corr = u5ineqTex("x", r, fmt(k));
@@ -3509,7 +3509,7 @@ E("u5-graph-to-ineq", 5, ["8.24"], 2, "gen", function () {
 }, ["Read the graph in three parts: where the circle sits, whether it is open or closed, and which way the shading goes.", "First find the number under the circle; that is the boundary value in every choice."]);
 
 // 15. L2, 8.24: boundary value of a described graph.
-E("u5-graph-boundary", 5, ["8.24"], 2, "gen", function () {
+E("u5-graph-boundary", 5, ["8.24"], 1, "gen", function () {
   var k = ri(-9, 9), r = pick(["lt", "gt", "le", "ge"]);
   var closed = (r === "le" || r === "ge"), dir = (r === "gt" || r === "ge") ? "right" : "left";
   var sol = "The circle always sits on the boundary value of the inequality, the number the variable is compared with: \\[ \\begin{aligned} x &" + (r === "lt" || r === "le" ? "<" : ">") + " " + fmt(k) + " \\end{aligned} \\] So the circle sits on <b>" + fmt(k) + "</b>.";
@@ -3517,7 +3517,7 @@ E("u5-graph-boundary", 5, ["8.24"], 2, "gen", function () {
 }, ["The circle sits on the number the variable is compared with in the inequality.", "First find the constant on the other side of the inequality sign from x."]);
 
 // 16. L2, 8.25, CR 3: solve an inequality with addition or subtraction.
-E("u5-solve-ineq-addsub", 5, ["8.25"], 2, "gen", function () {
+E("u5-solve-ineq-addsub", 5, ["8.25"], 1, "gen", function () {
   var r = pick(["lt", "gt", "le", "ge"]), sym = u5sym(r);
   if (Math.random() < 0.5) {
     var b = ri(2, 12), k = ri(-8, 10), c = k + b;
@@ -3633,7 +3633,7 @@ E("u5-compare-eq-ineq-process", 5, ["8.28"], 3, "var", varset([
 ]), ["Solve both problems side by side and watch for the one step where they can differ.", "First do the shared steps; then ask whether a negative divisor appears, because that is the only process difference."]);
 
 // 22. L2, 8.29, var: numbers satisfying the inequality but not the equation.
-E("u5-compare-eq-ineq-solutions", 5, ["8.29"], 2, "var", varset([
+E("u5-compare-eq-ineq-solutions", 5, ["8.29"], 1, "var", varset([
   function () {
     var sol = "The equation is satisfied only by 5, while the inequality allows anything bigger: \\[ \\begin{aligned} 6 &> 5 \\\\ 5 &= 5 \\end{aligned} \\] So the number that satisfies the inequality but not the equation is <b>6</b>.";
     return mcq("The equation \\(x = 5\\) and the inequality \\(x > 5\\) use the same boundary. Which number satisfies the inequality but does NOT satisfy the equation?", { t: "6", fb: "Correct: 6 is greater than 5, so it fits the inequality, and it is not the equation value." }, [
@@ -3677,7 +3677,7 @@ E("u5-compare-eq-ineq-solutions", 5, ["8.29"], 2, "var", varset([
 ]), ["Test each choice in both statements; the wanted number passes the inequality and fails the equation.", "First find the equation solution and rule it out, then test the rest in the inequality."]);
 
 // 23. L2, 8.30: context inequality with its graph shown.
-E("u5-context-graph", 5, ["8.30"], 2, "gen", function () {
+E("u5-context-graph", 5, ["8.30"], 1, "gen", function () {
   var ctxs = [
     { v: "s", r: "le", text: function (k) { return "A school club can spend at most $" + fmt(k) + " on supplies. Let s be the amount spent, in dollars."; } },
     { v: "a", r: "ge", text: function (k) { return "Riders must be at least " + fmt(k) + " cm tall for a certain ride. Let a be a rider's height, in centimetres."; } },
@@ -3773,7 +3773,7 @@ E("u5-ineq-substitution-check", 5, ["8.2"], 2, "gen", function () {
 }, ["Redo the substitution yourself and compare the left side with the right side before judging the student's words.", "First work out the left side with the given value; then check both the student's number and the student's verdict against yours."]);
 
 // 27. L2, 8.3: count how many listed values satisfy an inequality.
-E("u5-count-satisfying", 5, ["8.3"], 2, "gen", function () {
+E("u5-count-satisfying", 5, ["8.3"], 1, "gen", function () {
   for (var att = 0; att < 300; att++) {
     var form = ri(0, 1);
     var r = pick(["lt", "gt", "le", "ge"]);
@@ -3798,7 +3798,7 @@ E("u5-count-satisfying", 5, ["8.3"], 2, "gen", function () {
 }, ["Test each listed value in the inequality one at a time and keep a running count.", "First test the boundary value itself, since the equals part of the sign decides whether it counts."]);
 
 // 28. L2, 8.25: choose the correct solution of an inequality that needs only addition or subtraction.
-E("u5-solve-ineq-addsub-choose", 5, ["8.25"], 2, "gen", function () {
+E("u5-solve-ineq-addsub-choose", 5, ["8.25"], 1, "gen", function () {
   var r = pick(["lt", "gt", "le", "ge"]), fr = u5flip(r);
   var b = ri(2, 12), k = ri(-8, 10);
   var isAdd = Math.random() < 0.5;
@@ -3906,7 +3906,7 @@ E("u6-pattern-figure-expr", 6, ["7.1"], 1, "gen", function () {
 }, ["Find how much the count grows from one stage to the next; that growth is the step.", "Work backwards from Stage 1 by subtracting one step to get the start value."]);
 
 // 2. L2, 7.1, CR 2: pattern in words, total at a larger stage.
-E("u6-pattern-word-total", 6, ["7.1"], 2, "gen", function () {
+E("u6-pattern-word-total", 6, ["7.1"], 1, "gen", function () {
   var S = ri(4, 48), r = ri(2, 9), N = ri(11, 30);
   var ctx = pick([
     "A savings jar starts with $" + S + ". Each week, $" + r + " is added to the jar. How much money, in dollars, is in the jar after " + N + " weeks?",
@@ -3942,7 +3942,7 @@ E("u6-context-equation", 6, ["7.2"], 1, "gen", function () {
 }, ["Decide which amount is paid once and which amount is paid for each unit.", "The amount paid for each unit multiplies x; the one-time amount stands alone."]);
 
 // 4. L2, 7.3: given an equation, choose a context it could describe.
-E("u6-equation-context", 6, ["7.3"], 2, "var", varset([
+E("u6-equation-context", 6, ["7.3"], 1, "var", varset([
   function () {
     return mcq("Which situation could be described by the equation \\(y = 3x + 2\\)?",
       { t: "A plant is 2 cm tall at the first measuring, then grows 3 cm each week. y is its height in centimetres after x weeks.", fb: "Correct. The start value is 2 and the step is 3 each week." },
@@ -4035,7 +4035,7 @@ E("u6-table-equation", 6, ["7.4"], 1, "gen", function () {
 }, ["Find the step first: how much does y change when x grows by 1?", "The start value is the y value when x is 0; extend the pattern back if the table starts later."]);
 
 // 6. L2, 7.4, CR 3: table pattern, value beyond the table.
-E("u6-table-extend", 6, ["7.4"], 2, "gen", function () {
+E("u6-table-extend", 6, ["7.4"], 1, "gen", function () {
   var S = ri(2, 15), P = ri(2, 8), X = ri(8, 15);
   var xs = [0, 1, 2, 3], ys = xs.map(function (x) { return S + P * x; });
   var ans = S + P * X;
@@ -4115,7 +4115,7 @@ E("u6-graph-equation", 6, ["7.6"], 2, "gen", function () {
 }, ["Start with the y-intercept: it is the constant in the equation.", "Then find the step: how much y changes when x grows by 1."]);
 
 // 9. L2, 7.7, CR 2: sloped, horizontal or vertical graph; choose a point on it.
-E("u6-point-on-graph", 6, ["7.7"], 2, "gen", function () {
+E("u6-point-on-graph", 6, ["7.7"], 1, "gen", function () {
   var kind = pick(["slope", "slope", "horiz", "vert"]);
   function pt(x, y) { return "(" + fmt(x) + ", " + fmt(y) + ")"; }
   if (kind === "slope") {
@@ -4184,7 +4184,7 @@ E("u6-point-on-graph", 6, ["7.7"], 2, "gen", function () {
 }, ["For a sloped line, use its start and step to find the y value for a given x. For a flat or upright line, check which coordinate stays the same.", "First decide what kind of line it is: sloped, horizontal or vertical."]);
 
 // 10. L2, 7.8, CR 3: interpolate on a context graph.
-E("u6-interpolate-graph", 6, ["7.8"], 2, "gen", function () {
+E("u6-interpolate-graph", 6, ["7.8"], 1, "gen", function () {
   var ctxs = [
     { xl: "hours", yl: "km", prompt: "The graph shows the distance a bus has travelled since leaving the depot. The x-axis is time in hours and the y-axis is distance in kilometres.", ask: "How many kilometres has the bus travelled after XQ hours?" },
     { xl: "minutes", yl: "L", prompt: "The graph shows the water in a tank as it fills. The x-axis is time in minutes and the y-axis is volume in litres.", ask: "How many litres are in the tank after XQ minutes?" },
@@ -4441,7 +4441,7 @@ E("u7-scale-media-var", 7, ["10.8"], 1, "var", varset([
 ]), ["In a scale, decide which number belongs to the drawing and which to real life.", "The scale factor is image length divided by original length; below 1 means smaller, above 1 means larger."]);
 
 // 2. 10.16 L2 gen num with figure, CR 3: redraw with a scale factor, find one image side.
-E("u7-scale-draw-num", 7, ["10.16"], 2, "gen", function () {
+E("u7-scale-draw-num", 7, ["10.16"], 1, "gen", function () {
   var ks = [0.5, 1.5, 2, 2.5, 3];
   var k = pick(ks), kind = pick(["rect", "tri"]);
   var word = k < 1 ? "reduction" : "enlargement";
@@ -4545,7 +4545,7 @@ E("u7-proportional-check", 7, ["10.18"], 2, "gen", function () {
 }, ["A diagram is proportional when every image side divided by its matching original side gives the same ratio.", "Divide the first pair of sides, then divide the second pair, and compare the two ratios."]);
 
 // 5. 10.7 L2 gen MC with figure: similar or not, with the correct reason.
-E("u7-similar-verdict", 7, ["10.7"], 2, "gen", function () {
+E("u7-similar-verdict", 7, ["10.7"], 1, "gen", function () {
   var triples = [[3, 4, 5], [5, 12, 13], [6, 8, 10], [5, 5, 6], [5, 5, 8], [8, 15, 17]];
   function angsOf(s) {
     function ang(opp, x, y) { var v = (x * x + y * y - opp * opp) / (2 * x * y); v = Math.max(-1, Math.min(1, v)); return Math.round(Math.acos(v) * 180 / Math.PI); }
@@ -4651,7 +4651,7 @@ E("u7-similar-pair", 7, ["10.7"], 3, "gen", function () {
 }, ["Sort the sides in each list from smallest to largest before comparing them.", "Divide each side in the second list by the matching side in the first list; similar pairs give one shared ratio."]);
 
 // 7. 10.14 L2 gen num, CR 3: side of a similar polygon drawn with a given scale factor.
-E("u7-draw-similar-num", 7, ["10.14"], 2, "gen", function () {
+E("u7-draw-similar-num", 7, ["10.14"], 1, "gen", function () {
   var ks = [0.5, 1.5, 2, 2.5, 3];
   var k = pick(ks);
   var isTri = Math.random() < 0.5, sides, pickIdx;
@@ -4784,7 +4784,7 @@ E("u7-lines-symmetry", 7, ["10.1"], 1, "gen", function () {
 }, ["Try folding the shape in your mind: vertical, horizontal, and slanted folds.", "A fold counts only when the two halves match exactly, edge for edge."]);
 
 // 12. 10.9 L2 gen MC with figure, CR 2: complete a shape across a line of symmetry on a grid.
-E("u7-complete-half", 7, ["10.9"], 2, "gen", function () {
+E("u7-complete-half", 7, ["10.9"], 1, "gen", function () {
   for (var att = 0; att < 200; att++) {
     var vert = Math.random() < 0.6;
     var m = ri(-1, 2), d = ri(2, 3);
@@ -4940,7 +4940,7 @@ E("u7-rotate-vertex", 7, ["10.10"], 2, "gen", function () {
 }, ["The pivot vertex stays fixed; every other vertex swings around it.", "Find the step from the pivot to the named vertex, turn that step 90 degrees, then add it back to the pivot."]);
 
 // 15. 10.3 L2 var: symmetry in tessellations and repeating patterns.
-E("u7-tessellation-var", 7, ["10.3"], 2, "var", varset([
+E("u7-tessellation-var", 7, ["10.3"], 1, "var", varset([
   function () {
     return mcq("A honeycomb tessellation is made of regular hexagons that fit together with no gaps. About the centre of one hexagon, the whole pattern matches itself when it is turned. What is the angle of rotation symmetry there?",
       { t: "60°", fb: "Correct. A regular hexagon has order 6, and 360 divided by 6 is 60." },
@@ -4979,7 +4979,7 @@ E("u7-tessellation-var", 7, ["10.3"], 2, "var", varset([
 ]), ["Look for the smallest turn or fold that makes the whole repeating pattern land back on itself.", "For rotation, count how many matching positions fit in a full turn, then divide 360 degrees by that count."]);
 
 // 16. 10.4 L2 var: types of symmetry in described artwork.
-E("u7-artwork-symmetry-var", 7, ["10.4"], 2, "var", varset([
+E("u7-artwork-symmetry-var", 7, ["10.4"], 1, "var", varset([
   function () {
     var opts = [
       { t: "Both line symmetry and rotation symmetry", fb: "Correct. It folds along several lines and matches itself under part turns." },
@@ -5043,7 +5043,7 @@ E("u7-artwork-symmetry-var", 7, ["10.4"], 2, "var", varset([
 ]), ["Test the piece both ways: try folds first, then try part turns about the centre.", "Line symmetry needs a fold that matches exactly; rotation symmetry needs a part turn that matches exactly."]);
 
 // 17. 10.11 L2 var: designs that demonstrate both line and rotation symmetry.
-E("u7-both-symmetry-var", 7, ["10.11"], 2, "var", varset([
+E("u7-both-symmetry-var", 7, ["10.11"], 1, "var", varset([
   function () {
     return mcq("Which design demonstrates BOTH line symmetry and rotation symmetry?",
       { t: "A round badge with a five-pointed star in the exact centre", fb: "Correct. The star folds along 5 lines and matches itself under turns about the centre." },
@@ -5091,7 +5091,7 @@ E("u7-both-symmetry-var", 7, ["10.11"], 2, "var", varset([
 ]), ["A design needs to pass both tests: a fold that matches and a part turn that matches.", "Check each choice for a fold line first, then for a matching turn about the centre."]);
 
 // 18. 10.5 L2 gen MC with figure: how two shapes on a grid are related.
-E("u7-related-shapes", 7, ["10.5"], 2, "gen", function () {
+E("u7-related-shapes", 7, ["10.5"], 1, "gen", function () {
   function sqLens(pts) {
     var out = [];
     for (var i = 0; i < pts.length; i++) { var a = pts[i], b = pts[(i + 1) % pts.length]; out.push((a[0] - b[0]) * (a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1])); }
@@ -5143,7 +5143,7 @@ E("u7-related-shapes", 7, ["10.5"], 2, "gen", function () {
 }, ["Reflections and rotations never change side lengths, so compare the sides first.", "If the sides match, decide whether the second shape is flipped (reflection) or just turned (rotation)."]);
 
 // 19. 10.6 L2 gen MC with figure: symmetry that arises from a transformation.
-E("u7-transformation-symmetry", 7, ["10.6"], 2, "gen", function () {
+E("u7-transformation-symmetry", 7, ["10.6"], 1, "gen", function () {
   var mode = pick(["reflY", "reflX", "rot180"]);
   var A = [[ri(1, 2), ri(1, 2)], [ri(4, 5), ri(1, 2)], [ri(1, 3), ri(4, 5)]];
   var area19 = Math.abs((A[1][0] - A[0][0]) * (A[2][1] - A[0][1]) - (A[2][0] - A[0][0]) * (A[1][1] - A[0][1]));
@@ -5224,7 +5224,7 @@ E("u7-complete-transformation", 7, ["10.12"], 3, "gen", function () {
 }, ["Apply the same rule to the named vertex that the given image vertex shows.", "First find where B lands using the rule, then name the symmetry of the shape and image together."]);
 
 // 21. 10.13 L2 gen MC, CR 2: translation rule applied to a shape given by coordinates.
-E("u7-translation-rule", 7, ["10.13"], 2, "gen", function () {
+E("u7-translation-rule", 7, ["10.13"], 1, "gen", function () {
   for (var att = 0; att < 200; att++) {
     var a = ri(1, 5), b = ri(1, 5);
     if (a === b) continue;
@@ -5371,7 +5371,7 @@ E("u8-tangent-right-angle", 8, ["9.4"], 1, "gen", function () {
 }, ["Use the tangent property: what angle does a radius make with a tangent at the point where it touches?", "The radius OT ends at T, the exact point where the tangent touches the circle."]);
 
 // 2. 9.4 L2 num, CR 3: tangent length from a right triangle with a triple.
-E("u8-tangent-length", 8, ["9.4"], 2, "gen", function () {
+E("u8-tangent-length", 8, ["9.4"], 1, "gen", function () {
   var tr = pick(U8_TRIPLES), k = pick([1, 2]);
   var legA = tr[0] * k, legB = tr[1] * k, hyp = tr[2] * k;
   var swap = Math.random() < 0.5;
@@ -5407,7 +5407,7 @@ E("u8-tangent-length", 8, ["9.4"], 2, "gen", function () {
 }, ["The radius to a point of tangency is perpendicular to the tangent, so triangle OTP is right-angled at T.", "Mark the right angle at T, then use the Pythagorean relationship on triangle OTP."]);
 
 // 3. 9.6 L2 MC: the perpendicular from the centre bisects the chord.
-E("u8-chord-perp-bisects", 8, ["9.6"], 2, "gen", function () {
+E("u8-chord-perp-bisects", 8, ["9.6"], 1, "gen", function () {
   var phi = pick([42, 48, 54, 66, 72, 78, 84, 88]);
   var r = pick([5, 6, 7, 8, 9, 10, 11, 12]);
   var tilt = pick([0, 12, -12, 24]);
@@ -5428,7 +5428,7 @@ E("u8-chord-perp-bisects", 8, ["9.6"], 2, "gen", function () {
 }, ["Use the chord property: what does the perpendicular from the centre do to a chord?", "The foot of the perpendicular is M, the point where OM meets AB at a right angle."]);
 
 // 4. 9.6 L2 num, CR 3: chord length from the radius and the distance to the chord.
-E("u8-chord-length", 8, ["9.6"], 2, "gen", function () {
+E("u8-chord-length", 8, ["9.6"], 1, "gen", function () {
   var tr = pick(U8_TRIPLES), k = pick([1, 2]);
   var d = tr[0] * k, half = tr[1] * k, r = tr[2] * k;
   if (Math.random() < 0.5) { var tmp = d; d = half; half = tmp; }
@@ -5502,7 +5502,7 @@ E("u8-inscribed-reflex", 8, ["9.7"], 2, "gen", function () {
 }, ["An inscribed angle is half the central angle on the same arc, and the arc it stands on decides which central angle to use.", "Check which arc C sits on: the inscribed angle uses the central angle on the opposite arc, reflex if needed."]);
 
 // 7. 9.8 L2 num, CR 2: angle in a semicircle is a right angle.
-E("u8-semicircle-angle", 8, ["9.8"], 2, "gen", function () {
+E("u8-semicircle-angle", 8, ["9.8"], 1, "gen", function () {
   var gam = pick([44, 52, 60, 68, 76, 84, 96, 104, 112, 120, 128, 136]);
   var rot = pick([0, 14, -14, 28]);
   var atA = Math.random() < 0.5;
@@ -5524,7 +5524,7 @@ E("u8-semicircle-angle", 8, ["9.8"], 2, "gen", function () {
 }, ["An angle inscribed in a semicircle is a right angle, so angle C is 90 degrees.", "Use the angle sum of a triangle: subtract 90 and the given angle from 180."]);
 
 // 8. 9.9 L2 MC, CR 2: inscribed angles on the same arc are equal.
-E("u8-same-arc-angles", 8, ["9.9"], 2, "gen", function () {
+E("u8-same-arc-angles", 8, ["9.9"], 1, "gen", function () {
   var v = pick([18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 62, 64, 66, 68, 70, 72]);
   var rot = pick([0, 18, 36, 54, 72, 90]);
   var A = u8P(200 + rot), B = u8P(340 + rot), C = u8P(80 + rot), D = u8P(135 + rot);
@@ -5659,7 +5659,7 @@ E("u9-prob-in-media", 9, ["12.1"], 1, "var", varset([
   }
 ]), ["Probability shows up as a chance, an odds statement or a percent chance that something will happen.", "Scan the four items for words like chance, in 4, or percent, tied to a future event."]);
 
-E("u9-assumption-limit", 9, ["12.2"], 2, "var", varset([
+E("u9-assumption-limit", 9, ["12.2"], 1, "var", varset([
   function(){
     return mcq("A student says the probability of heads on a coin toss is \\(\\frac{1}{2}\\). Which option states the assumption behind this probability and its limitation?",
       {t:"It assumes the coin and the toss are fair; it fails if the coin is bent or tossed unevenly", fb:"Right: equal chances need a fair coin, and damage or an uneven toss breaks that assumption."},
@@ -5716,7 +5716,7 @@ E("u9-assumption-limit", 9, ["12.2"], 2, "var", varset([
   }
 ]), ["Every stated probability rests on an assumption: ask what must be true for the number to hold.", "Name what the number counts or is based on first, then ask what could make that basis fail."]);
 
-E("u9-same-number-two-sides", 9, ["12.3"], 2, "var", varset([
+E("u9-same-number-two-sides", 9, ["12.3"], 1, "var", varset([
   function(){
     return mcq("A clinic reports that a treatment helped 7 out of 10 patients. Supporters say most patients improved. How could people who oppose the treatment use the same result to argue their side?",
       {t:"They can say it did not help 3 out of 10 patients, so almost a third saw no benefit", fb:"Right: the same result leaves 3 out of 10 unhelped, and that count supports the other side."},
@@ -5764,7 +5764,7 @@ E("u9-same-number-two-sides", 9, ["12.3"], 2, "var", varset([
   }
 ]), ["The same number can be framed by its opposite outcome: what did not happen, out of the same total.", "Subtract the stated count from the total to find the count the other side will stress."]);
 
-E("u9-combined-decision", 9, ["12.4"], 2, "var", varset([
+E("u9-combined-decision", 9, ["12.4"], 1, "var", varset([
   function(){
     return mcq("A coach must choose a shooter for a final free throw. The chance from the chart counts equally likely outcomes, practice trials show the shooter made 18 of 20 shots this week, and the coach feels this player stays calm under pressure. Which option describes how the three kinds of probability combine in this decision?",
       {t:"The chart gives theoretical probability, the practice record gives experimental probability, and the calm feeling is subjective judgement", fb:"Right: equal outcomes are theoretical, trial results are experimental, and a feeling is subjective."},
@@ -5869,7 +5869,7 @@ E("u9-classify-probability", 9, ["12.4"], 1, "var", varset([
   }
 ]), ["Ask where the number came from: counted equal outcomes, results of trials, or a personal feeling.", "Check the story for trials that were actually carried out; their presence points to experimental probability."]);
 
-E("u9-collection-problem", 9, ["11.1"], 2, "var", varset([
+E("u9-collection-problem", 9, ["11.1"], 1, "var", varset([
   function(){
     return mcq("To learn what a whole town thinks about building a new arena, a reporter asks only fans leaving a hockey game at the old arena. What is the main problem with this data collection?",
       {t:"Bias, because fans at one game do not represent the whole town being studied", fb:"Right: the group asked is one sided, so the results lean toward fans and miss other residents."},
@@ -5974,7 +5974,7 @@ E("u9-collection-biggest-threat", 9, ["11.1"], 3, "var", varset([
   }
 ]), ["Two influences can appear together: judge which one does more damage to whether the results can be trusted.", "Ask which flaw changes the answers themselves, not just the cost or the schedule of the study."]);
 
-E("u9-match-influence", 9, ["11.2"], 2, "var", varset([
+E("u9-match-influence", 9, ["11.2"], 1, "var", varset([
   function(){
     return mcq("A town wants to survey every household about road repairs. Printing and mailing a long survey to all 4000 households, with staff to read the replies, would use the whole yearly survey budget. Which influence does this situation illustrate?",
       {t:"Cost, because reaching the whole population would spend the entire survey budget", fb:"Right: money is the limiting influence, since full coverage costs more than the town can spend."},
@@ -6136,7 +6136,7 @@ E("u9-use-whole-population", 9, ["11.4"], 1, "var", varset([
   }
 ]), ["A whole population works when the group is small, everyone is reachable, and testing harms nothing.", "Rule out any option where the group is huge or where testing would destroy the items."]);
 
-E("u9-population-limitation", 9, ["11.5"], 2, "var", varset([
+E("u9-population-limitation", 9, ["11.5"], 1, "var", varset([
   function(){
     return mcq("A maker wants to know how many hours its candles burn. Burning a candle to measure it uses the candle up completely. Which limitation best explains why a sample is used instead of the whole population?",
       {t:"Testing the whole population would destroy every candle in the stock being studied", fb:"Right: each test consumes the candle, so testing all of them leaves nothing to sell or use."},
@@ -6232,7 +6232,7 @@ E("u9-generalization-critique", 9, ["11.6"], 3, "var", varset([
   }
 ]), ["Test the claim against its sample: check the size, then check whether the sample matches the whole group claimed.", "Picture who is missing from the sample; missing groups are where a generalization usually breaks."]);
 
-E("u9-rubric-missing-part", 9, ["11.7"], 2, "var", varset([
+E("u9-rubric-missing-part", 9, ["11.7"], 1, "var", varset([
   function(){
     return mcq("A rubric for a data project assesses the choice of a data collection method with social considerations, the selection of a population or a sample with justification, and the communication of findings. Which required part is missing from this rubric?",
       {t:"A question for investigation that the project sets out to answer with collected data", fb:"Right: the rubric never assesses whether the project has a clear question guiding the study."},
@@ -6271,7 +6271,7 @@ E("u9-rubric-missing-part", 9, ["11.7"], 2, "var", varset([
   }
 ]), ["Hold the full rubric list in mind, then tick off each part the described rubric already covers.", "List the four required parts first; the missing one is the part never named in the stem."]);
 
-E("u9-plan-element", 9, ["11.8"], 2, "var", varset([
+E("u9-plan-element", 9, ["11.8"], 1, "var", varset([
   function(){
     return mcq("A project plan states that interviewers will ask each person for permission before starting and will keep names off all answer forms. Which element of the project plan does this detail belong to?",
       {t:"The method of data collection, in the social considerations that protect participants", fb:"Right: permission and nameless forms are social considerations built into how data is collected."},
