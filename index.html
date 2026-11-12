@@ -58,6 +58,32 @@
   .hint{font-size:.82rem;color:#4b5a61;line-height:1.45;}
   .scoreline{font-size:.95rem;font-weight:bold;margin:6px 0 14px;}
   .thinNote{background:#fdf6ec;border:1px solid var(--accent2);border-radius:8px;padding:9px 12px;font-size:.88rem;line-height:1.45;}
+  /* Teacher set-editing (pilot, Nov 2026): screen-only controls, rendered
+     only in teacher mode. They live in #app (never in #printArea markup),
+     so printed output is untouched. */
+  .tctl{margin:10px 0 2px;padding:8px 10px;border:1px dashed var(--accent2);border-radius:8px;background:#f4f7fb;font-size:.88rem;}
+  .tctl .tlab{font-weight:bold;margin-right:4px;}
+  .tctl button{margin:2px 4px 2px 0;}
+  .tbar{margin-top:12px;padding:10px 12px;border:1px solid var(--accent2);border-radius:8px;background:#f4f7fb;}
+  .tbar button{margin:2px 4px 2px 0;}
+  .tbar .texports{margin-top:6px;}
+  .tpanel{margin-top:12px;padding:10px 12px;border:1px solid var(--accent2);border-radius:8px;background:#f4f7fb;}
+  .tpanel button{margin:2px 4px 2px 0;}
+  .tlist{margin:6px 0 10px;padding-left:22px;font-size:.92rem;line-height:1.5;}
+  .tlist li{margin:6px 0;}
+  .tlist .tid{color:#555;font-size:.85rem;}
+  .tqstatus{display:block;margin-top:4px;font-weight:600;}
+  .tqprompt{margin:4px 0 2px;}
+  .tqprompt .opts{color:#333;font-size:.9rem;}
+  .tpick{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;margin-top:8px;}
+  .tpick h4{margin:10px 0 4px;font-size:.95rem;}
+  .tpick button{display:block;width:100%;text-align:left;margin:3px 0;padding:6px 8px;background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:6px;cursor:pointer;font-size:.9rem;line-height:1.45;}
+  .tpick button:hover{border-color:var(--accent2);}
+  .tpick .tsamp{display:block;margin-top:3px;font-size:.86rem;color:#4b5a61;line-height:1.4;}
+  .tpick .tsamp svg{max-width:100%;height:auto;max-height:90px;}
+  .tflash{outline:3px solid var(--accent2);outline-offset:2px;border-radius:8px;animation:tflashA 1.8s ease-out 1;}
+  @keyframes tflashA{0%{background:rgba(217,164,65,.45);}100%{background:transparent;}}
+  @media (prefers-reduced-motion: reduce){.tflash{animation:none;}}
   .endmode [data-check],.endmode [data-sol]{display:none;}
   .modebar{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
   .group{border:1px solid var(--line);border-radius:8px;padding:10px 12px 12px;margin-top:12px;}
@@ -174,6 +200,9 @@
   html[data-a11y-theme="dark"] .summarybox{border-top-color:#33475c;}
   html[data-a11y-theme="dark"] button.alt{background:var(--card);}
   html[data-a11y-theme="dark"] .indbox{background:var(--card);}
+  html[data-a11y-theme="dark"] .tpick{background:var(--card);}
+  html[data-a11y-theme="dark"] .tpick button{background:var(--card);}
+  html[data-a11y-theme="dark"] .tpick .tsamp{color:#b9c6cc;}
   html[data-a11y-theme="dark"] details#builderBox>summary,html[data-a11y-theme="dark"] details#a11yBox>summary{background:var(--card);border-color:var(--line);}
   html[data-a11y-theme="dark"] input,html[data-a11y-theme="dark"] select,html[data-a11y-theme="dark"] textarea{background:#222e35;color:var(--ink);border-color:var(--line);}
   html[data-a11y-theme="dark"] :focus-visible{outline-color:#ffd166;}
@@ -346,6 +375,7 @@
     <div class="modebar">
       <button type="button" id="copyLink" class="alt">Copy link to these settings</button>
     </div>
+    <p class="hint" id="teacherNote" hidden>Teacher mode is on: question editing controls will appear on practice sets, sheets and tests you make. Any link you copy to share with students leaves teacher mode out; only the clearly labelled teacher link buttons keep it.</p>
     <p class="hint" id="poolInfo"></p>
   </div>
   </details>
@@ -7361,12 +7391,35 @@ function updatePoolInfo(){refreshFace();
   $("poolInfo").textContent=p.length?"Question bank for this selection: "+p.length+" question templates (Level 1: "+byL[1]+", Level 2: "+byL[2]+", Level 3: "+byL[3]+"). Generators make a fresh question every draw.":
    "No questions match that selection yet ,  try adding a unit or clearing the indicator filter.";
 }
+/* Teacher-mode UI split (Nov 10, 2026): the level percentage fields,
+   the paper count fields and the prior knowledge checkbox render only
+   in teacher mode. Their values are captured at boot, after the URL
+   parameters have been applied (tGateStudentUI), so settings still
+   resolve when the controls are absent from the DOM: hiding a control
+   never disables the setting behind it, and a link a teacher built
+   composes the identical set for a student. */
+var hidCtl={mc:10,nc:5,mix:[20,60,20],pk:false};
+function tCtlVal(id,fb){var el=$(id);return el?el.value:fb;}
+function tPkOn(){var el=$("pkChk");return el?!!el.checked:!!hidCtl.pk;}
+function tGateStudentUI(){
+  var mc=$("mcCountIn"),nc=$("ncCountIn"),l1=$("lv1"),l2=$("lv2"),l3=$("lv3"),pk=$("pkChk");
+  if(mc)hidCtl.mc=mc.value;
+  if(nc)hidCtl.nc=nc.value;
+  if(l1&&l2&&l3)hidCtl.mix=[l1.value,l2.value,l3.value];
+  if(pk)hidCtl.pk=!!pk.checked;
+  if(TEACHER)return;
+  ["mcCountIn","ncCountIn","lv1","lv2","lv3","pkChk"].forEach(function(id){
+    var el=$(id);if(!el)return;
+    var lab=(el.closest?el.closest("label"):null)||el;
+    if(lab.parentNode)lab.parentNode.removeChild(lab);
+  });
+}
 function settings(){
   readUnits();readInds();
   return {units:state.units.slice(),inds:state.inds.slice(),midCap:state.midCap,
     count:Math.max(1,Math.min(60,+$("countIn").value||10)),
-    mcCount:Math.max(0,Math.min(60,+$("mcCountIn").value||0)),
-    ncCount:Math.max(0,Math.min(60,+$("ncCountIn").value||0)),
+    mcCount:Math.max(0,Math.min(60,+tCtlVal("mcCountIn",hidCtl.mc)||0)),
+    ncCount:Math.max(0,Math.min(60,+tCtlVal("ncCountIn",hidCtl.nc)||0)),
     wantKey:!($("keyChk")&&$("keyChk").checked===false),
     order:$("orderIn").value,
     wsMc:($("wsMcIn")?parseFloat($("wsMcIn").value):0),
@@ -7374,7 +7427,7 @@ function settings(){
     chk:($("chkIn")?$("chkIn").value:"each"),
     timer:($("timerChk")?$("timerChk").checked:false),
     seed:($("seedIn")?$("seedIn").value.trim():""),
-    mix:[+$("lv1").value||0,+$("lv2").value||0,+$("lv3").value||0]};
+    mix:[+tCtlVal("lv1",hidCtl.mix[0])||0,+tCtlVal("lv2",hidCtl.mix[1])||0,+tCtlVal("lv3",hidCtl.mix[2])||0]};
 }
 function tags(q){
   var e=q._entry;
@@ -7490,11 +7543,691 @@ function retryMissed(){
   _suppressSeedOnce=true;
   renderIndicators();updatePoolInfo();startOnline();
 }
+/* ============ Teacher set-editing (pilot, Nov 2026) ============
+   Per-question controls on generated sets, visible ONLY when the page
+   URL carries teacher=1 (Jason's ruling, Nov 10, 2026: the same app,
+   controls behind a teacher link, no clone). Without the flag nothing
+   here runs: no controls render and every draw follows the app's
+   ordinary path, exactly as before.
+   Freezing: in teacher mode each question on screen is redrawn from
+   its own bank entry under a per-slot seed (salt + entry id + nonce),
+   preserving the drawn answer type and avoiding duplicate questions
+   within the set. A set link encodes one token per question (entry
+   id, nonce, the accepted candidate's index in the slot's seeded
+   stream, answer type), so the link reopens the same questions with
+   the same numbers. If a slot cannot be redrawn fresh under its
+   seeds (its entry has too few distinct questions), the drawn
+   question is stored raw in the token instead, marked with "@".
+   Share rule: links the app generates strip teacher=1 by default
+   (tShareURL); only the labelled teacher link buttons keep it.
+   Answer state: edits to the online set preserve every untouched
+   question's answer, feedback and score; a replaced or removed
+   question's state is cleared (tSyncOnline / tRestoreOnline).
+   Reordering (Nov 10, 2026 follow-on): Move up, Move down, Move to
+   top and Move to bottom on every question, in the online strip, the
+   exam panel (within the question's own section only) and the sheet
+   panel. A move only reorders the item array: state stays keyed to
+   the question's _tuid, totals are untouched, and set links store
+   tokens in set order, so a reordered set reopens in its new order. */
+var TEACHER=false;
+function isPK(e){return e.indicators.some(function(c){return c.indexOf("PK")===0;});} /* shim: this bank carries no PK-coded indicators, so this is always false here; the teacher block calls it. */
+var T=null; /* teacher context for the set on screen, or null */
+var examState=null,sheetState=null;
+var _tUid=0;
+function tSalt(){var abc="abcdefghjkmnpqrstuvwxyz23456789",s="";for(var i=0;i<6;i++)s+=abc.charAt(ri(0,abc.length-1));return s;}
+function tEntryById(id){for(var i=0;i<BANK.length;i++)if(BANK[i].id===id)return BANK[i];return null;}
+function tB64(s){return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");}
+function tUnB64(s){s=String(s).replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";return decodeURIComponent(escape(atob(s)));}
+function tRawQ(q){var r={p:q.prompt,t:q.type,s:q.solution};if(q.type==="mc"){r.o=q.options;r.c=q.correct;}else if(q.type==="num"){r.a=q.answer;r.to=q.tol;}else{r.an=q.answers;}if(q.figure)r.f=q.figure;return r;}
+function tScanStream(e,nonce,wantType,avoid,salt){
+  /* First acceptable candidate in the slot's seeded stream, returned
+     with its absolute index in the stream. The set token stores that
+     index, so a set link redraws the exact same candidate no matter
+     what the avoid set looks like when the link is reopened: edits
+     freeze against the whole current set, rebuilds against the slots
+     before them, and the index keeps the two in agreement. */
+  return withSeed("tset|"+salt+"|"+e.id+"|"+nonce,function(){
+    var k,cand;
+    for(k=0;k<60;k++){cand=e.gen();cand._entry=e;
+      if(wantType&&cand.type!==wantType)continue;
+      if(avoid&&avoid[canonQ(cand)])continue;
+      return {q:cand,idx:k};}
+    for(k=60;k<120;k++){cand=e.gen();cand._entry=e;
+      if(wantType&&cand.type!==wantType)continue;
+      return {q:cand,idx:k};}
+    cand=e.gen();cand._entry=e;return {q:cand,idx:120};
+  });
+}
+function tStreamDraw(e,nonce,idx,salt){
+  return withSeed("tset|"+salt+"|"+e.id+"|"+nonce,function(){
+    var cand=null;for(var k=0;k<=idx;k++){cand=e.gen();cand._entry=e;}
+    return cand;
+  });
+}
+function tCanMake(e,type){for(var k=0;k<8;k++){try{var q=e.gen();if(q&&q.type===type)return true;}catch(err){}}return false;}
+function tRawDraw(e,wantType,avoid){
+  var best=null,k,cand;
+  for(k=0;k<60;k++){cand=e.gen();cand._entry=e;if(wantType&&cand.type!==wantType)continue;if(avoid&&avoid[canonQ(cand)])continue;best=cand;break;}
+  if(!best){for(k=0;k<60;k++){cand=e.gen();cand._entry=e;if(wantType&&cand.type!==wantType)continue;best=cand;break;}}
+  if(!best){best=e.gen();best._entry=e;}
+  best._entry=e;return best;
+}
+function tFreezeSlot(e,wantType,avoid,salt){
+  var hit=null;
+  if(!wantType||tCanMake(e,wantType)){
+    for(var nonce=0;nonce<25&&!hit;nonce++){
+      var r=tScanStream(e,nonce,wantType,avoid,salt);
+      if(r&&(!wantType||r.q.type===wantType)&&!(avoid&&avoid[canonQ(r.q)]))hit={q:r.q,n:nonce,i:r.idx};
+    }
+  }
+  if(hit){if(avoid)avoid[canonQ(hit.q)]=1;hit.q._tuid="u"+(++_tUid);hit.q._ts={n:hit.n,i:hit.i,t:hit.q.type,raw:null};return hit.q;}
+  var nq=tRawDraw(e,wantType,avoid);
+  if(avoid)avoid[canonQ(nq)]=1;
+  nq._tuid="u"+(++_tUid);nq._ts={n:0,i:0,t:nq.type,raw:tRawQ(nq)};return nq;
+}
+function tTypeOk(q,wantType){
+  if(!q)return false;
+  if(!wantType)return true;
+  if(wantType==="mc")return q.type==="mc";
+  if(wantType==="nonmc")return q.type!=="mc";
+  return q.type===wantType;
+}
+/* WYSIWYG pick (Jason's ruling, Nov 10, 2026): the sample question the
+   picker displays for an entry is the exact question inserted when the
+   teacher picks that entry. It is adopted as a raw-frozen slot (the
+   same storage the freeze fallback uses), so set links reopen it
+   verbatim. If the sample would duplicate a question already in the
+   set, the caller falls back to a stream freeze of the same entry. */
+function tAdoptPicked(e,q,avoid){
+  q._entry=e;
+  if(avoid)avoid[canonQ(q)]=1;
+  q._tuid="u"+(++_tUid);q._ts={n:0,i:0,t:q.type,raw:tRawQ(q)};return q;
+}
+/* Seeded set adoption (Jason's ruling, Nov 10, 2026): when a set was
+   drawn from a seed, students opening the same link see exactly the
+   drawn questions, numbers included. Teacher mode therefore adopts the
+   drawn questions as its starting slots, stored raw-frozen like
+   WYSIWYG picks, instead of stream-refreezing them under a random
+   salt, so the teacher's screen matches the class's screen digit for
+   digit and copied set links reopen the set verbatim. Unseeded sets
+   keep the stream freeze exactly as before. */
+function tAdoptDrawn(q,avoid){
+  if(avoid)avoid[canonQ(q)]=1;
+  q._tuid="u"+(++_tUid);q._ts={n:0,i:0,t:q.type,raw:tRawQ(q)};return q;
+}
+function tScopePool(){
+  if(!T)return [];
+  if(T.view==="exam")return poolFor(T.scope.units,T.scope.inds,T.scope.examCap,function(e){return T.scope.includePK||!isPK(e);});
+  return poolFor(T.scope.units,T.scope.inds,T.scope.midCap);
+}
+function tCrPool(){return tScopePool().filter(function(e){return typeof CR_MARKS!=="undefined"&&CR_MARKS[e.id]!==undefined&&CR_MARKS[e.id]>=2&&e.level>=2;});}
+function tAvoidAll(items){var a={};items.forEach(function(q){if(q)a[canonQ(q)]=1;});return a;}
+function tSwapCands(curE,type,pool){return pool.filter(function(e){return e.id!==curE.id&&tCanMake(e,type);});}
+/* Numbers-only redraw (Jason's ruling, Nov 11, 2026): "New numbers" must
+   change only the numerals in the current question: same bank entry, same
+   scenario, same ask. A redraw qualifies when masking every numeral out
+   of its prompt (and, for multiple choice, out of its options) leaves
+   text identical to the current question's, while the question itself
+   differs. Entries whose generator varies the scenario or the ask fail
+   the mask test; after a fair run of tries this returns null and the
+   caller says so, pointing the teacher at swap or pick from the bank. */
+function tShapeSig(q){
+  var mask=function(x){return String(x==null?"":x).replace(/\d+(?:\.\d+)?/g,"#");};
+  var sig=mask(q.prompt);
+  if(q.type==="mc"&&q.options)sig+="||"+q.options.map(function(o){return mask(typeof o==="string"?o:o.t);}).sort().join("|");
+  return sig;
+}
+/* Walk a slot's full seeded stream in order (nonce 0 to 24, index 0 to
+   120 within each nonce), calling visit(cand, nonce, idx) for every
+   candidate of an acceptable type. visit returns false to stop early.
+   Candidates carry the same stream coordinates tStreamDraw uses, so a
+   visited candidate can be frozen in place with _ts {n, i}. */
+function tStreamWalk(e,wantType,salt,visit){
+  var stop=false;
+  for(var nonce=0;nonce<25&&!stop;nonce++){
+    withSeed("tset|"+salt+"|"+e.id+"|"+nonce,function(){
+      for(var k=0;k<=120;k++){
+        var cand=e.gen();cand._entry=e;
+        if(!tTypeOk(cand,wantType))continue;
+        if(visit(cand,nonce,k)===false){stop=true;break;}
+      }
+    });
+  }
+}
+function tNumbersOnly(e,curQ,wantType,avoid,salt){
+  if(!e||!curQ)return null;
+  var sig=tShapeSig(curQ),curCanon=canonQ(curQ);
+  /* "First stream candidate that is not the current one" toggles: the
+     seeded stream is deterministic, so click two hands back the first
+     candidate and every supported entry bounces between exactly two
+     questions (Jason's toggle report, Nov 11, 2026, confirmed
+     bank-wide). Taking only the first acceptable candidate per nonce
+     (what tFreezeSlot does) also starves the pool: some entries yield
+     just 2 to 3 distinct questions that way. So walk the FULL stream,
+     find the current question in it, and return the NEXT distinct
+     mask-matching candidate after it, wrapping to the first. Repeated
+     clicks walk every variant the entry can make. If the current
+     question is not in the stream (a raw-frozen pick, for example),
+     the first stream candidate that differs wins. */
+  var seen={},foundCur=false,firstAlt=null,answer=null;
+  var stamp=function(cand,n,i){cand._tuid="u"+(++_tUid);cand._ts={n:n,i:i,t:cand.type,raw:null};return cand;};
+  tStreamWalk(e,wantType,salt,function(cand,n,i){
+    var cn=canonQ(cand);
+    if(seen[cn])return true;
+    seen[cn]=1;
+    if(cand.type!==curQ.type||tShapeSig(cand)!==sig)return true;
+    if(cn!==curCanon&&avoid&&avoid[cn])return true;
+    if(foundCur){answer=stamp(cand,n,i);return false;}
+    if(cn===curCanon)foundCur=true;
+    else if(!firstAlt)firstAlt=stamp(cand,n,i);
+    return true;
+  });
+  if(answer)return answer;
+  if(firstAlt)return firstAlt;
+  /* The stream holds no other mask-matching variant (or none at all).
+     Fall back to redraws, which can still find one for entries whose
+     generator only occasionally keeps the shape. */
+  var myAvoid={},k;
+  for(k in avoid)myAvoid[k]=1;
+  myAvoid[curCanon]=1;
+  for(var tries=0;tries<50;tries++){
+    var cand2=tFreezeSlot(e,wantType,myAvoid,salt);
+    if(!cand2)return null;
+    if(cand2.type===curQ.type&&tShapeSig(cand2)===sig&&canonQ(cand2)!==curCanon)return cand2;
+  }
+  return null;
+}
+/* After a bank pick, take the teacher back to the slot they were working
+   on (Jason, Nov 11, 2026): the picker sits away from the question, below
+   the set in the online view and at the foot of the panel in the exam and
+   sheet views, and closing it shifts the page, so the replaced question
+   was easy to lose. Scrolls the slot to the middle of the screen and
+   flashes its outline. */
+function tReturnToPick(attrVal){
+  var box=$("session");if(!box||!box.querySelectorAll)return;
+  var btn=null;
+  Array.prototype.forEach.call(box.querySelectorAll("[data-tpick]"),function(b){if(b.getAttribute("data-tpick")===attrVal)btn=b;});
+  if(!btn)return;
+  var el=btn;
+  if(btn.closest)el=btn.closest("li")||btn.closest(".q")||btn;
+  try{
+    if(el.scrollIntoView)el.scrollIntoView({behavior:scrollBehavior(),block:"center"});
+    if(el.classList){el.classList.add("tflash");setTimeout(function(){el.classList.remove("tflash");},1900);}
+  }catch(err){}
+}
+function tOpenPicker(title,pool,onPick,wantType){
+  var pk=$("tPicker");if(!pk)return;
+  var samples={};
+  var byUnit={};pool.forEach(function(e){(byUnit[e.unit]=byUnit[e.unit]||[]).push(e);});
+  var h='<div class="tpick"><b>'+esc(title)+'</b> <button type="button" class="alt" id="tPickClose">Close</button>';
+  Object.keys(byUnit).sort(function(a,b){return a-b;}).forEach(function(u){
+    h+="<h4>Unit "+u+": "+esc(UNITS[u])+"</h4>";
+    byUnit[u].slice().sort(function(a,b){return a.level-b.level||(a.id<b.id?-1:1);}).forEach(function(e){
+      var desc=INDICATORS[e.indicators[0]]||"";
+      if(desc.length>110)desc=desc.slice(0,107)+"...";
+      var samp="",sq=null;
+      try{for(var k=0;k<40;k++){var cand=e.gen();if(cand&&tTypeOk(cand,wantType)){sq=cand;break;}}}catch(err){}
+      if(sq&&sq.prompt){sq._entry=e;samples[e.id]=sq;samp=sq.prompt;}
+      h+='<button type="button" data-tpent="'+e.id+'">Unit '+e.unit+" \u00B7 "+e.indicators.join(", ")+" \u00B7 Level "+e.level+" \u2014 "+esc(desc)+' <span class="tid">'+e.id+"</span>"+(samp?'<span class="tsamp">Sample: '+samp+"</span>":"")+"</button>";
+    });
+  });
+  h+="</div>";
+  pk.innerHTML=h;pk.hidden=false;typesetMath(pk);
+  $("tPickClose").addEventListener("click",function(){pk.hidden=true;pk.innerHTML="";});
+  Array.prototype.forEach.call(pk.querySelectorAll("[data-tpent]"),function(b){
+    b.addEventListener("click",function(){var id=b.getAttribute("data-tpent");var sq2=samples[id]||null;pk.hidden=true;pk.innerHTML="";onPick(id,sq2);});
+  });
+  pk.scrollIntoView({behavior:scrollBehavior(),block:"nearest"});
+}
+function tTok(q){
+  var ts=q._ts||{n:0,i:0,raw:null};
+  if(ts.raw)return q._entry.id+"@"+tB64(JSON.stringify(ts.raw));
+  return q._entry.id+"."+ts.n+"."+(ts.i||0)+({mc:"M",num:"N",text:"T"}[q.type]||"M");
+}
+function tSetValue(){
+  if(!T)return "";
+  var ed=T.edited?"*":"";
+  if(T.view==="exam"&&examState){
+    var sr=examState.ex.srItems.map(function(it){return tTok(it.q);}).join(",");
+    var cr=examState.ex.crItems.map(function(it){return tTok(it.q);}).join(",");
+    return "e"+ed+":"+T.salt+":"+sr+";"+cr;
+  }
+  if(T.view==="sheet"&&sheetState)return "s"+ed+":"+T.salt+":"+sheetState.items.map(tTok).join(",");
+  if(T.view==="online"&&current)return "p"+ed+":"+T.salt+":"+current.map(tTok).join(",");
+  return "";
+}
+function tStripTeacher(url){
+  var qi=url.indexOf("?");if(qi<0)return url;
+  var p=new URLSearchParams(url.slice(qi+1));p.delete("teacher");
+  var q=p.toString();return q?url.slice(0,qi)+"?"+q:url.slice(0,qi);
+}
+/* Answer-choice shuffle for shared student links (Jason, Nov 11, 2026):
+   options are sorted at generation, so the correct letter is sticky
+   across a class opening the same link (measured that evening: 51 of
+   70 numbers-friendly MC entries in this bank kept the same correct
+   letter across 7 generations). A teacher copying a student link can
+   choose "Shuffled per student" instead: the link carries shuf=1 and
+   each opening of it permutes every multiple choice question's options
+   on a fresh copy, remapping the correct index, so classmates cannot
+   copy answers by letter. The teacher's own view is never shuffled,
+   the teacher's preference is remembered on their device, and a link
+   without the flag behaves exactly as before. */
+var SHUFFLE_OPTS=false;
+function shufQ(q){
+  if(!q||q.type!=="mc"||!q.options||q.options.length<2)return q;
+  var idx=q.options.map(function(_,j){return j;});
+  for(var i=idx.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=idx[i];idx[i]=idx[j];idx[j]=t;}
+  if(idx.every(function(v,j){return v===j;}))return q;
+  var nq=Object.assign({},q);
+  nq.options=idx.map(function(k){return q.options[k];});
+  nq.correct=idx.indexOf(q.correct);
+  return nq;
+}
+function tShufPref(){try{return localStorage.getItem("shufPref")==="shuf"?"shuf":"sorted";}catch(e){return "sorted";}}
+function tShufSelHtml(){
+  var pref=tShufPref();
+  return ' <label class="hint">Answer choices in student links: <select id="tShufSel"><option value="sorted"'+(pref==="sorted"?" selected":"")+'>Sorted</option><option value="shuf"'+(pref==="shuf"?" selected":"")+'>Shuffled per student</option></select></label>';
+}
+function tShareURL(teacher){
+  var p=new URLSearchParams(settingsToURL().split("?")[1]||"");
+  p.delete("teacher");p.delete("seed");p.delete("shuf");
+  var shufSel=$("tShufSel");
+  if(shufSel){try{localStorage.setItem("shufPref",shufSel.value);}catch(e){}
+    if(!teacher&&shufSel.value==="shuf")p.set("shuf","1");}
+  if(T){var sv=tSetValue();if(sv)p.set("set",sv);
+    if(T.view==="exam")p.set("mode","exam");else if(T.view==="sheet")p.set("mode","sheet");else p.delete("mode");}
+  if(teacher)p.set("teacher","1");
+  return location.origin+location.pathname+"?"+p.toString();
+}
+function tCopyLink(teacher,statusEl){
+  var url=tShareURL(teacher);
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url);}
+  if(statusEl)statusEl.textContent=teacher?"Teacher link copied: it opens this exact set with the editing controls on. Keep it for yourself.":"Link copied for students: it opens this exact set, with no editing controls.";
+  if(!teacher){try{history.replaceState(null,"",url.slice(location.origin.length));}catch(e){}}
+}
+function tBuildTok(tok,avoid,salt){
+  var id=null,n=0,idx=0,raw=null,at=tok.indexOf("@");
+  if(at>=0){id=tok.slice(0,at);try{raw=JSON.parse(tUnB64(tok.slice(at+1)));}catch(e){raw=null;}}
+  else{var m=tok.match(/^([a-z0-9-]+)\.(\d+)\.(\d+)([MNT])$/);if(!m)return null;id=m[1];n=+m[2];idx=+m[3];}
+  var e=tEntryById(id);if(!e)return null;
+  var q;
+  if(raw){q={prompt:raw.p,type:raw.t,solution:raw.s,_entry:e};if(raw.o){q.options=raw.o;q.correct=raw.c;}if(raw.t==="num"){q.answer=raw.a;q.tol=raw.to;}else if(raw.an){q.answers=raw.an;}if(raw.f)q.figure=raw.f;}
+  else{q=tStreamDraw(e,n,idx,salt);}
+  if(avoid)avoid[canonQ(q)]=1;
+  q._tuid="u"+(++_tUid);q._ts={n:n,i:idx,t:q.type,raw:raw};
+  return q;
+}
+function tRebuildFromURL(){
+  var set=new URLSearchParams(location.search).get("set");if(!set)return false;
+  var parts=set.split(":");if(parts.length<3)return false;
+  var vtag=parts[0],salt=parts[1],body=parts.slice(2).join(":");
+  var view=vtag.charAt(0),edited=vtag.indexOf("*")>=0;
+  var s=settings();
+  if(view==="p"){
+    var avoid={},items=[];
+    body.split(",").forEach(function(tok){if(tok){var q=tBuildTok(tok,avoid,salt);if(q)items.push(q);}});
+    if(!items.length)return false;
+    stopExamTimer();
+    current=items;checkedCount=0;correctCount=0;checkMode=(s.chk==="end")?"end":"each";endGraded=false;setResults={};sessionSeed="";
+    lastSettings=s;onlineThin=false;T=null;
+    if(TEACHER)T={view:"online",salt:salt,scope:{units:s.units.slice(),inds:s.inds.slice(),midCap:!!s.midCap},edited:edited,state:{},endGraded:false,picker:null};
+    if(!TEACHER&&SHUFFLE_OPTS)current=current.map(shufQ);
+    renderOnline(false);
+    $("session").scrollIntoView({behavior:scrollBehavior()});
+    return true;
+  }
+  if(view==="e"){
+    var segs=body.split(";"),avoid2={},srItems=[],crItems=[];
+    (segs[0]?segs[0].split(","):[]).forEach(function(tok){if(tok){var q=tBuildTok(tok,avoid2,salt);if(q)srItems.push({q:q,marks:1});}});
+    (segs[1]?segs[1].split(","):[]).forEach(function(tok){if(tok){var q=tBuildTok(tok,avoid2,salt);if(q)crItems.push({q:q,marks:(typeof CR_MARKS!=="undefined"&&CR_MARKS[q._entry.id])||2});}});
+    if(!srItems.length&&!crItems.length)return false;
+    var single=s.units.length===1;
+    var wsCrF=(typeof s.wsCr==="number"&&!isNaN(s.wsCr))?s.wsCr:2.3;
+    var scope=single?("Unit "+s.units[0]+" \u00B7 "+UNITS[s.units[0]]):s.units.map(function(u){return "Unit "+u;}).join(", ");
+    var title=single?"Math 9: Practice Unit Test":"Math 9: Practice Exam";
+    wordName=single?"Math 9 Practice Unit Test.docx":"Math 9 Practice Exam.docx";
+    var exO={srItems:srItems,crItems:crItems,single:single,short:false};
+    exO.srMarks=srItems.length;
+    exO.crMarks=crItems.reduce(function(a,it){return a+it.marks;},0);
+    exO.l3Marks=crItems.filter(function(it){return it.q._entry.level===3;}).reduce(function(a,it){return a+it.marks;},0);
+    exO.total=exO.srMarks+exO.crMarks;
+    T=null;
+    examState={ex:exO,s:s,single:single,wsCrF:wsCrF,scope:scope,title:title,t0:Date.now()};
+    if(TEACHER){var anyPK=srItems.concat(crItems).some(function(it){return isPK(it.q._entry);});
+      T={view:"exam",salt:salt,scope:{units:s.units.slice(),inds:s.inds.slice(),includePK:anyPK,examCap:(s.units.slice().sort(function(a,b){return a-b;}).join()==="1,2,3,4")},edited:edited,textEdited:false,picker:null};}
+    if(!TEACHER&&SHUFFLE_OPTS){srItems.forEach(function(it){it.q=shufQ(it.q);});crItems.forEach(function(it){it.q=shufQ(it.q);});}
+    renderExam();
+    return true;
+  }
+  if(view==="s"){
+    var avoid3={},items3=[];
+    body.split(",").forEach(function(tok){if(tok){var q=tBuildTok(tok,avoid3,salt);if(q)items3.push(q);}});
+    if(!items3.length)return false;
+    wordName="Math 9 Practice Sheet.docx";
+    T=null;
+    sheetState={items:items3,s:s,thin:false};
+    if(TEACHER)T={view:"sheet",salt:salt,scope:{units:s.units.slice(),inds:s.inds.slice(),midCap:!!s.midCap},edited:edited,textEdited:false,picker:null};
+    if(!TEACHER&&SHUFFLE_OPTS)sheetState.items=sheetState.items.map(shufQ);
+    renderSheet();
+    return true;
+  }
+  return false;
+}
+/* ---- online practice set ---- */
+function tMoveHtml(key,i,n){
+  var atFirst=i<=0,atLast=i>=n-1;
+  return '<button type="button" class="alt" data-tup="'+key+'"'+(atFirst?" disabled":"")+'>Move up</button>'
+   +'<button type="button" class="alt" data-tdown="'+key+'"'+(atLast?" disabled":"")+'>Move down</button>'
+   +'<button type="button" class="alt" data-ttop="'+key+'"'+(atFirst?" disabled":"")+'>Move to top</button>'
+   +'<button type="button" class="alt" data-tbot="'+key+'"'+(atLast?" disabled":"")+'>Move to bottom</button>';
+}
+/* Per-question status line inside a question's own teacher strip
+   (Jason, Nov 11, 2026): feedback for a per-question button belongs
+   beside that question, not in the toolbar at the top of the set,
+   where it is easy to miss entirely. */
+function tQStatus(key,msg){var s=document.querySelector('[data-tqstatus="'+key+'"]');if(s)s.textContent=msg;}
+/* The question itself, for the exam and sheet teacher panels: those
+   panels listed only metadata (type, unit, level, entry id), so the
+   teacher could not see which question the controls belonged to
+   (Jason, Nov 11, 2026, from his phone screenshot of the sheet panel). */
+function tQPromptHtml(q){
+  var h='<div class="tqprompt"><div class="prompt">'+stepHTML(q.prompt)+'</div>';
+  if(q.figure)h+='<div class="fig">'+q.figure+'</div>';
+  if(q.type==="mc"&&q.options)h+='<div class="opts">'+q.options.map(function(o){return '<div>\u25CB '+(typeof o==="string"?o:o.t)+'</div>';}).join("")+'</div>';
+  return h+'</div>';
+}
+function tctlHtml(i){
+  if(!TEACHER||!T||T.view!=="online")return "";
+  return '<div class="tctl"><span class="tlab">Teacher:</span><button type="button" class="alt" data-tnew="'+i+'">New numbers</button><button type="button" class="alt" data-tswap="'+i+'">Replace (random)</button><button type="button" class="alt" data-tpick="'+i+'">Pick from bank</button><button type="button" class="alt" data-trem="'+i+'">Remove</button>'+tMoveHtml(i,i,current.length)+'<span class="hint tqstatus" data-tqstatus="'+i+'" role="status"></span></div>';
+}
+function tBarHtml(){
+  if(!TEACHER||!T||T.view!=="online")return "";
+  return '<div class="tbar"><b>Teacher tools:</b> <button type="button" class="alt" id="tAddBtn">Add question</button><button type="button" class="alt" id="tAddBankBtn">Add from bank</button><button type="button" class="alt" id="tCopyStudentBtn">Copy link for students</button><button type="button" class="alt" id="tCopyTeacherBtn">Copy teacher link (teacher only)</button>'+tShufSelHtml()+' <span class="hint" id="tStatus" role="status"></span><div class="texports"><button type="button" class="alt" data-kahoot="1">Download for Kahoot</button><button type="button" class="alt" data-blooket="1">Download for Blooket</button><button type="button" class="alt" data-brightspace="1">Download for Brightspace</button> <label class="hint">Variants per question <select id="bsVarSel"><option value="5">5</option><option value="10" selected>10</option><option value="20">20</option></select></label> <span class="hint" id="gameStatus" role="status"></span></div><div id="tPicker" hidden></div></div>';
+}
+function tOnlineStatus(m){var st=$("tStatus");if(st)st.textContent=m;}
+function tWireOnline(){
+  if(!TEACHER||!T||T.view!=="online")return;
+  var box=$("session");if(!box)return;
+  Array.prototype.forEach.call(box.querySelectorAll("[data-tnew]"),function(b){b.addEventListener("click",function(){tOpOnline("new",+b.getAttribute("data-tnew"));});});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-tswap]"),function(b){b.addEventListener("click",function(){tOpOnline("swap",+b.getAttribute("data-tswap"));});});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-tpick]"),function(b){b.addEventListener("click",function(){tPickOnline(+b.getAttribute("data-tpick"));});});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-trem]"),function(b){b.addEventListener("click",function(){tOpOnline("remove",+b.getAttribute("data-trem"));});});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-tup]"),function(b){b.addEventListener("click",function(){tOpOnline("up",+b.getAttribute("data-tup"));});});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-tdown]"),function(b){b.addEventListener("click",function(){tOpOnline("down",+b.getAttribute("data-tdown"));});});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-ttop]"),function(b){b.addEventListener("click",function(){tOpOnline("top",+b.getAttribute("data-ttop"));});});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-tbot]"),function(b){b.addEventListener("click",function(){tOpOnline("bottom",+b.getAttribute("data-tbot"));});});
+  var ab=$("tAddBtn");if(ab)ab.addEventListener("click",function(){tAddOnline(false);});
+  var abb=$("tAddBankBtn");if(abb)abb.addEventListener("click",function(){tAddOnline(true);});
+  var cs=$("tCopyStudentBtn");if(cs)cs.addEventListener("click",function(){tCopyLink(false,$("tStatus"));});
+  var ct=$("tCopyTeacherBtn");if(ct)ct.addEventListener("click",function(){tCopyLink(true,$("tStatus"));});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-kahoot]"),function(b){b.addEventListener("click",function(){exportGame("kahoot",current,$("gameStatus"));});});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-blooket]"),function(b){b.addEventListener("click",function(){exportGame("blooket",current,$("gameStatus"));});});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-brightspace]"),function(b){b.addEventListener("click",function(){exportBrightspace(current,$("gameStatus"));});});
+}
+function tSyncOnline(){
+  if(!T||T.view!=="online"||!current)return;
+  var st={};
+  current.forEach(function(q,i){
+    var o={done:false,ok:false,given:null,fb:"",sol:false,exOpen:false,exq:null,exn:0};
+    if(q.type==="mc"){var sel=document.querySelector('input[name="opt'+i+'"]:checked');if(sel)o.given=+sel.value;}
+    else{var inp=$("ans"+i);if(inp&&inp.value!=="")o.given=inp.value;}
+    var fb=$("fb"+i);if(fb){o.done=!!fb.dataset.done;o.fb=fb.innerHTML;}
+    var sol=$("sol"+i);if(sol)o.sol=sol.classList.contains("show");
+    var exb=$("ex"+i);if(exb){o.exOpen=!exb.hidden;o.exq=exb._exq||null;o.exn=+(exb.dataset.exn||0);}
+    o.ok=!!(setResults[i]&&setResults[i].ok);
+    st[q._tuid]=o;
+  });
+  T.state=st;T.endGraded=endGraded;
+}
+function tRestoreOnline(){
+  if(!T||T.view!=="online"||!current)return;
+  checkedCount=0;correctCount=0;setResults={};
+  current.forEach(function(q,i){
+    var o=T.state&&T.state[q._tuid];if(!o)return;
+    if(q.type==="mc"){if(o.given!==null){var r=document.querySelector('input[name="opt'+i+'"][value="'+o.given+'"]');if(r)r.checked=true;}}
+    else if(o.given!==null){var inp=$("ans"+i);if(inp)inp.value=o.given;}
+    if(o.done){var fb=$("fb"+i);if(fb){fb.classList.add("show");fb.dataset.done="1";fb.innerHTML=o.fb;}setResults[i]={ok:o.ok,inds:q._entry.indicators.slice()};checkedCount++;if(o.ok)correctCount++;}
+    if(o.sol){var sl=$("sol"+i);if(sl)sl.classList.add("show");}
+    if(o.exOpen&&o.exq){var exb=$("ex"+i);if(exb){exb.dataset.exn=String(o.exn);renderExample(i,o.exq);setExLabel(i,true);}}
+  });
+  if(T.endGraded){endGraded=true;for(var j=0;j<current.length;j++){var s2=$("sol"+j);if(s2)s2.classList.add("show");}var gb=$("gradeBtn");if(gb){gb.disabled=true;gb.textContent="Answers checked";}}
+  updateScore();maybeSummary();
+}
+function tAfterOnlineEdit(){renderOnline(false);tRestoreOnline();}
+function tOpOnline(op,i,entryId,pickedQ){
+  if(!T||T.view!=="online")return;
+  var q=current[i];if(!q)return;
+  tSyncOnline();
+  if(op==="remove"){current.splice(i,1);T.edited=true;tAfterOnlineEdit();return;}
+  if(op==="up"||op==="down"||op==="top"||op==="bottom"){
+    var j=op==="up"?i-1:op==="down"?i+1:op==="top"?0:current.length-1;
+    if(j===i||j<0||j>=current.length)return;
+    var mv=current.splice(i,1)[0];current.splice(j,0,mv);
+    T.edited=true;tAfterOnlineEdit();return;
+  }
+  var e=q._entry,avoid=tAvoidAll(current);
+  if(op==="new"){var nq=tNumbersOnly(e,q,q.type,avoid,T.salt);if(!nq){tQStatus(i,"Question "+(i+1)+" can't just change its numbers. Try swap, or pick from the bank.");return;}current[i]=nq;T.edited=true;tAfterOnlineEdit();return;}
+  if(op==="swap"){
+    var cands=tSwapCands(e,q.type,tScopePool());
+    if(!cands.length){tOnlineStatus("No other question of this kind is available in the current scope to swap in.");return;}
+    current[i]=tFreezeSlot(pick(cands),q.type,avoid,T.salt);T.edited=true;tAfterOnlineEdit();return;
+  }
+  if(op==="pick"){var e2=tEntryById(entryId);if(!e2)return;current[i]=(pickedQ&&pickedQ._entry===e2&&!avoid[canonQ(pickedQ)])?tAdoptPicked(e2,pickedQ,avoid):tFreezeSlot(e2,null,avoid,T.salt);T.edited=true;tAfterOnlineEdit();return;}
+}
+function tPickOnline(i){
+  tOpenPicker("Replace question "+(i+1)+" from the bank",tScopePool(),function(id,q){tOpOnline("pick",i,id,q);tReturnToPick(String(i));});
+}
+function tAddOnline(fromBank){
+  if(!T||T.view!=="online")return;
+  if(fromBank){tOpenPicker("Add a question from the bank",tScopePool(),function(id,q){tAddOnlineEntry(id,q);tReturnToPick(String(current.length-1));});return;}
+  tSyncOnline();
+  var pool=tScopePool(),inSet={};
+  current.forEach(function(q){inSet[q._entry.id]=1;});
+  var cands=pool.filter(function(e){return !inSet[e.id];});
+  if(!cands.length)cands=pool.slice();
+  if(!cands.length){tOnlineStatus("The bank has no questions in the current scope to add.");return;}
+  current.push(tFreezeSlot(pick(cands),null,tAvoidAll(current),T.salt));
+  T.edited=true;tAfterOnlineEdit();
+}
+function tAddOnlineEntry(id,pickedQ){
+  var e=tEntryById(id);if(!e)return;
+  tSyncOnline();
+  var avoid=tAvoidAll(current);
+  current.push((pickedQ&&pickedQ._entry===e&&!avoid[canonQ(pickedQ)])?tAdoptPicked(e,pickedQ,avoid):tFreezeSlot(e,null,avoid,T.salt));
+  T.edited=true;tAfterOnlineEdit();
+}
+/* ---- composed practice tests and exams ---- */
+function examLive(ex){
+  var sr=ex.srItems.length,cr=0,l3=0;
+  ex.crItems.forEach(function(it){cr+=it.marks;if(it.q._entry.level===3)l3+=it.marks;});
+  return {sr:sr,cr:cr,l3:l3,total:sr+cr};
+}
+function examShortNow(ex){var t=examLive(ex);return ex.single?(t.sr<11||t.cr<14):(t.sr<18||t.cr<17);}
+function tExamPanelHtml(){
+  if(!TEACHER||!T||T.view!=="exam"||!examState)return "";
+  var ex=examState.ex;
+  function row(section,it,i){
+    var q=it.q,e=q._entry;
+    return '<li><b>'+(section==="sr"?"A":"B")+(i+1)+".</b> Unit "+e.unit+" \u00B7 "+e.indicators.join(", ")+" \u00B7 Level "+e.level+(section==="cr"?(" \u00B7 "+it.marks+" marks"):"")+' <span class="tid">'+e.id+'</span> <button type="button" class="alt" data-tnew="'+section+":"+i+'">New numbers</button><button type="button" class="alt" data-tswap="'+section+":"+i+'">Replace (random)</button><button type="button" class="alt" data-tpick="'+section+":"+i+'">Pick from bank</button><button type="button" class="alt" data-trem="'+section+":"+i+'">Remove</button>'+tMoveHtml(section+":"+i,i,section==="sr"?ex.srItems.length:ex.crItems.length)+tQPromptHtml(q)+'<span class="hint tqstatus" data-tqstatus="'+section+":"+i+'" role="status"></span></li>';
+  }
+  return '<div class="tpanel" id="tExamPanel"><b>Teacher tools: edit this paper</b>'
+   +'<p class="hint">Changes update the paper, the answer key and the totals at once. These controls and the free text editor (Edit the exam) are alternatives: once free text editing is on, the question controls, set links and the Brightspace download pause for this paper, because they work from the question set rather than edited text. Print, Word and Copy below always use the paper exactly as shown.</p>'
+   +'<p class="hint" id="tPanelNote" hidden>Free text editing is on for this paper, so the question controls are paused. Make a new paper to use them again.</p>'
+   +'<div><b>Section A: selected response</b> <button type="button" class="alt" id="tAddSrBtn">Add question</button><button type="button" class="alt" id="tAddSrBankBtn">Add from bank</button></div>'
+   +'<ol class="tlist">'+ex.srItems.map(function(it,i){return row("sr",it,i);}).join("")+"</ol>"
+   +'<div><b>Section B: constructed response</b> <button type="button" class="alt" id="tAddCrBtn">Add question</button><button type="button" class="alt" id="tAddCrBankBtn">Add from bank</button></div>'
+   +'<ol class="tlist">'+ex.crItems.map(function(it,i){return row("cr",it,i);}).join("")+"</ol>"
+   +'<div><button type="button" class="alt" id="tCopyStudentBtn">Copy link for students</button><button type="button" class="alt" id="tCopyTeacherBtn">Copy teacher link (teacher only)</button><button type="button" class="alt" id="tBsBtn">Download for Brightspace</button>'+tShufSelHtml()+' <span class="hint" id="tExamStatus" role="status"></span></div>'
+   +'<div id="tPicker" hidden></div></div>';
+}
+function tPanelPause(panelId){
+  var p=$(panelId);if(!p)return;
+  Array.prototype.forEach.call(p.querySelectorAll("button"),function(b){b.disabled=true;});
+  var n=$("tPanelNote");if(n)n.hidden=false;
+}
+function tWireExam(){
+  if(!TEACHER||!T||T.view!=="exam")return;
+  var box=$("session");if(!box)return;
+  function wire(attr,fn){Array.prototype.forEach.call(box.querySelectorAll("["+attr+"]"),function(b){b.addEventListener("click",function(){var v=b.getAttribute(attr).split(":");fn(v[0],+v[1]);});});}
+  wire("data-tnew",function(sec,i){tOpExam(sec,"new",i);});
+  wire("data-tswap",function(sec,i){tOpExam(sec,"swap",i);});
+  wire("data-trem",function(sec,i){tOpExam(sec,"remove",i);});
+  wire("data-tpick",function(sec,i){tPickExam(sec,i);});
+  wire("data-tup",function(sec,i){tOpExam(sec,"up",i);});
+  wire("data-tdown",function(sec,i){tOpExam(sec,"down",i);});
+  wire("data-ttop",function(sec,i){tOpExam(sec,"top",i);});
+  wire("data-tbot",function(sec,i){tOpExam(sec,"bottom",i);});
+  var a1=$("tAddSrBtn");if(a1)a1.addEventListener("click",function(){tAddExam("sr",false);});
+  var a2=$("tAddSrBankBtn");if(a2)a2.addEventListener("click",function(){tAddExam("sr",true);});
+  var a3=$("tAddCrBtn");if(a3)a3.addEventListener("click",function(){tAddExam("cr",false);});
+  var a4=$("tAddCrBankBtn");if(a4)a4.addEventListener("click",function(){tAddExam("cr",true);});
+  var cs=$("tCopyStudentBtn");if(cs)cs.addEventListener("click",function(){tCopyLink(false,$("tExamStatus"));});
+  var ct=$("tCopyTeacherBtn");if(ct)ct.addEventListener("click",function(){tCopyLink(true,$("tExamStatus"));});
+  var bs=$("tBsBtn");if(bs)bs.addEventListener("click",function(){
+    var items=examState.ex.srItems.map(function(it){return it.q;}).concat(examState.ex.crItems.map(function(it){return it.q;}));
+    exportBrightspace(items,$("tExamStatus"));});
+  if(T.textEdited)tPanelPause("tExamPanel");
+}
+function tExamAllQ(){var a=[];examState.ex.srItems.forEach(function(it){a.push(it.q);});examState.ex.crItems.forEach(function(it){a.push(it.q);});return a;}
+function tOpExam(section,op,i,entryId,pickedQ){
+  if(!T||T.view!=="exam"||!examState)return;
+  var ex=examState.ex,items=section==="sr"?ex.srItems:ex.crItems,it=items[i];if(!it)return;
+  if(op==="remove"){items.splice(i,1);T.edited=true;renderExam();return;}
+  if(op==="up"||op==="down"||op==="top"||op==="bottom"){
+    var j=op==="up"?i-1:op==="down"?i+1:op==="top"?0:items.length-1;
+    if(j===i||j<0||j>=items.length)return;
+    var mv=items.splice(i,1)[0];items.splice(j,0,mv);
+    T.edited=true;renderExam();return;
+  }
+  var avoid=tAvoidAll(tExamAllQ());
+  var wantType=section==="sr"?"mc":it.q.type;
+  if(op==="new"){var nq=tNumbersOnly(it.q._entry,it.q,wantType,avoid,T.salt);if(!nq){renderExam();tQStatus(section+":"+i,"Question "+(section==="sr"?"A":"B")+(i+1)+" can't just change its numbers. Try swap, or pick from the bank.");return;}it.q=nq;T.edited=true;renderExam();return;}
+  if(op==="swap"){
+    var cands=section==="sr"?tScopePool().filter(function(e){return e.id!==it.q._entry.id&&tCanMake(e,"mc");}):tCrPool().filter(function(e){return e.id!==it.q._entry.id;});
+    if(!cands.length){renderExam();var st=$("tExamStatus");if(st)st.textContent="No other question is available in the current scope to swap in.";return;}
+    var e2=pick(cands);
+    it.q=tFreezeSlot(e2,section==="sr"?"mc":null,avoid,T.salt);
+    if(section==="cr")it.marks=CR_MARKS[e2.id];
+    T.edited=true;renderExam();return;
+  }
+  if(op==="pick"){var e3=tEntryById(entryId);if(!e3)return;var useQ=(pickedQ&&pickedQ._entry===e3&&!avoid[canonQ(pickedQ)]&&(section!=="sr"||pickedQ.type==="mc"))?pickedQ:null;it.q=useQ?tAdoptPicked(e3,useQ,avoid):tFreezeSlot(e3,section==="sr"?"mc":null,avoid,T.salt);if(section==="cr")it.marks=CR_MARKS[e3.id];T.edited=true;renderExam();return;}
+}
+function tPickExam(section,i){
+  var pool=section==="sr"?tScopePool().filter(function(e){return probeType(e)==="mc";}):tCrPool();
+  tOpenPicker("Replace "+(section==="sr"?"Section A":"Section B")+" question "+(i+1)+" from the bank",pool,function(id,q){tOpExam(section,"pick",i,id,q);tReturnToPick(section+":"+i);},section==="sr"?"mc":null);
+}
+function tAddExam(section,fromBank){
+  if(!T||T.view!=="exam"||!examState)return;
+  if(fromBank){
+    var pool=section==="sr"?tScopePool().filter(function(e){return probeType(e)==="mc";}):tCrPool();
+    tOpenPicker(section==="sr"?"Add a selected-response question from the bank":"Add a constructed-response question from the bank",pool,function(id,q){tAddExamEntry(section,id,q);tReturnToPick(section+":"+((section==="sr"?examState.ex.srItems:examState.ex.crItems).length-1));},section==="sr"?"mc":null);
+    return;
+  }
+  var pool2=section==="sr"?tScopePool().filter(function(e){return tCanMake(e,"mc");}):tCrPool();
+  var inSet={};tExamAllQ().forEach(function(q){inSet[q._entry.id]=1;});
+  var cands=pool2.filter(function(e){return !inSet[e.id];});
+  if(!cands.length)cands=pool2.slice();
+  if(!cands.length){var st=$("tExamStatus");if(st)st.textContent="The bank has no questions in the current scope to add.";return;}
+  tAddExamEntry(section,pick(cands).id);
+}
+function tAddExamEntry(section,id,pickedQ){
+  var e=tEntryById(id);if(!e)return;
+  var ex=examState.ex,avoid=tAvoidAll(tExamAllQ());
+  var useQ=(pickedQ&&pickedQ._entry===e&&!avoid[canonQ(pickedQ)]&&(section!=="sr"||pickedQ.type==="mc"))?pickedQ:null;
+  if(section==="sr")ex.srItems.push({q:useQ?tAdoptPicked(e,useQ,avoid):tFreezeSlot(e,"mc",avoid,T.salt),marks:1});
+  else ex.crItems.push({q:useQ?tAdoptPicked(e,useQ,avoid):tFreezeSlot(e,null,avoid,T.salt),marks:CR_MARKS[e.id]});
+  T.edited=true;renderExam();
+}
+/* ---- practice sheet ---- */
+function tSheetPanelHtml(){
+  if(!TEACHER||!T||T.view!=="sheet"||!sheetState)return "";
+  function row(q,i){var e=q._entry;
+    return '<li><b>'+(i+1)+'.</b> '+(q.type==="mc"?"Multiple choice":"Constructed response")+" \u00B7 Unit "+e.unit+" \u00B7 "+e.indicators.join(", ")+" \u00B7 Level "+e.level+' <span class="tid">'+e.id+'</span> <button type="button" class="alt" data-tnew="'+i+'">New numbers</button><button type="button" class="alt" data-tswap="'+i+'">Replace (random)</button><button type="button" class="alt" data-tpick="'+i+'">Pick from bank</button><button type="button" class="alt" data-trem="'+i+'">Remove</button>'+tMoveHtml(i,i,sheetState.items.length)+tQPromptHtml(q)+'<span class="hint tqstatus" data-tqstatus="'+i+'" role="status"></span></li>';}
+  return '<div class="tpanel" id="tSheetPanel"><b>Teacher tools: edit this sheet</b>'
+   +'<p class="hint">Changes update the sheet and its answer key at once. These controls and the free text editor (Edit the sheet) are alternatives: once free text editing is on, the question controls and set links pause for this sheet, because they work from the question set rather than edited text. Print, Word and Copy below always use the sheet exactly as shown.</p>'
+   +'<p class="hint" id="tPanelNote" hidden>Free text editing is on for this sheet, so the question controls are paused. Make a new sheet to use them again.</p>'
+   +'<ol class="tlist">'+sheetState.items.map(row).join("")+"</ol>"
+   +'<div><button type="button" class="alt" id="tAddBtn">Add question</button><button type="button" class="alt" id="tAddBankBtn">Add from bank</button><button type="button" class="alt" id="tCopyStudentBtn">Copy link for students</button><button type="button" class="alt" id="tCopyTeacherBtn">Copy teacher link (teacher only)</button>'+tShufSelHtml()+' <span class="hint" id="tSheetStatus" role="status"></span></div>'
+   +'<div id="tPicker" hidden></div></div>';
+}
+function tSheetStatus(m){var st=$("tSheetStatus");if(st)st.textContent=m;}
+function tWireSheet(){
+  if(!TEACHER||!T||T.view!=="sheet")return;
+  var box=$("session");if(!box)return;
+  Array.prototype.forEach.call(box.querySelectorAll("[data-tnew]"),function(b){b.addEventListener("click",function(){tOpSheet("new",+b.getAttribute("data-tnew"));});});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-tswap]"),function(b){b.addEventListener("click",function(){tOpSheet("swap",+b.getAttribute("data-tswap"));});});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-tpick]"),function(b){b.addEventListener("click",function(){tPickSheet(+b.getAttribute("data-tpick"));});});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-trem]"),function(b){b.addEventListener("click",function(){tOpSheet("remove",+b.getAttribute("data-trem"));});});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-tup]"),function(b){b.addEventListener("click",function(){tOpSheet("up",+b.getAttribute("data-tup"));});});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-tdown]"),function(b){b.addEventListener("click",function(){tOpSheet("down",+b.getAttribute("data-tdown"));});});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-ttop]"),function(b){b.addEventListener("click",function(){tOpSheet("top",+b.getAttribute("data-ttop"));});});
+  Array.prototype.forEach.call(box.querySelectorAll("[data-tbot]"),function(b){b.addEventListener("click",function(){tOpSheet("bottom",+b.getAttribute("data-tbot"));});});
+  var ab=$("tAddBtn");if(ab)ab.addEventListener("click",function(){tAddSheet(false);});
+  var abb=$("tAddBankBtn");if(abb)abb.addEventListener("click",function(){tAddSheet(true);});
+  var cs=$("tCopyStudentBtn");if(cs)cs.addEventListener("click",function(){tCopyLink(false,$("tSheetStatus"));});
+  var ct=$("tCopyTeacherBtn");if(ct)ct.addEventListener("click",function(){tCopyLink(true,$("tSheetStatus"));});
+  if(T.textEdited)tPanelPause("tSheetPanel");
+}
+function tOpSheet(op,i,entryId,pickedQ){
+  if(!T||T.view!=="sheet"||!sheetState)return;
+  var items=sheetState.items,q=items[i];if(!q)return;
+  if(op==="remove"){items.splice(i,1);T.edited=true;renderSheet();return;}
+  if(op==="up"||op==="down"||op==="top"||op==="bottom"){
+    var j=op==="up"?i-1:op==="down"?i+1:op==="top"?0:items.length-1;
+    if(j===i||j<0||j>=items.length)return;
+    var mv=items.splice(i,1)[0];items.splice(j,0,mv);
+    T.edited=true;renderSheet();return;
+  }
+  var avoid=tAvoidAll(items);
+  if(op==="new"){var nq=tNumbersOnly(q._entry,q,q.type,avoid,T.salt);if(!nq){tQStatus(i,"Question "+(i+1)+" can't just change its numbers. Try swap, or pick from the bank.");return;}items[i]=nq;T.edited=true;renderSheet();return;}
+  if(op==="swap"){
+    var cands=tSwapCands(q._entry,q.type,tScopePool());
+    if(!cands.length){tSheetStatus("No other question of this kind is available in the current scope to swap in.");return;}
+    items[i]=tFreezeSlot(pick(cands),q.type,avoid,T.salt);T.edited=true;renderSheet();return;
+  }
+  if(op==="pick"){var e2=tEntryById(entryId);if(!e2)return;items[i]=(pickedQ&&pickedQ._entry===e2&&!avoid[canonQ(pickedQ)])?tAdoptPicked(e2,pickedQ,avoid):tFreezeSlot(e2,null,avoid,T.salt);T.edited=true;renderSheet();return;}
+}
+function tPickSheet(i){
+  var q=sheetState.items[i];if(!q)return;
+  var mc=q.type==="mc";
+  var pool=tScopePool().filter(function(e){return (probeType(e)==="mc")===mc;});
+  tOpenPicker("Replace question "+(i+1)+" from the bank",pool,function(id,q2){tOpSheet("pick",i,id,q2);tReturnToPick(String(i));},mc?"mc":"nonmc");
+}
+function tAddSheet(fromBank){
+  if(!T||T.view!=="sheet"||!sheetState)return;
+  var items=sheetState.items;
+  var mc=items.length?(items[items.length-1].type==="mc"):true;
+  var pool=tScopePool().filter(function(e){return (probeType(e)==="mc")===mc;});
+  if(fromBank){tOpenPicker("Add a question from the bank",pool,function(id,q){tAddSheetEntry(id,q);tReturnToPick(String(sheetState.items.length-1));},mc?"mc":"nonmc");return;}
+  var inSet={};items.forEach(function(q){inSet[q._entry.id]=1;});
+  var cands=pool.filter(function(e){return !inSet[e.id];});
+  if(!cands.length)cands=pool.slice();
+  if(!cands.length){tSheetStatus("The bank has no questions of that kind in the current scope to add.");return;}
+  tAddSheetEntry(pick(cands).id);
+}
+function tAddSheetEntry(id,pickedQ){
+  var e=tEntryById(id);if(!e)return;
+  var avoid=tAvoidAll(sheetState.items);
+  sheetState.items.push((pickedQ&&pickedQ._entry===e&&!avoid[canonQ(pickedQ)])?tAdoptPicked(e,pickedQ,avoid):tFreezeSlot(e,null,avoid,T.salt));
+  T.edited=true;renderSheet();
+}
+var lastSettings=null,onlineThin=false;
 function startOnline(){
   stopExamTimer();
   var s=settings();var _sd=activeSeed(s);sessionSeed=_sd;
   var res=withSeed(_sd,function(){return drawSet(s.units,s.inds,s.count,s.mix,s.order,s.midCap);});
   current=res.items;checkedCount=0;correctCount=0;checkMode=(s.chk==="end")?"end":"each";endGraded=false;setResults={};
+  lastSettings=s;onlineThin=res.thin;T=null;
+  if(TEACHER&&current.length){
+    T={view:"online",salt:tSalt(),scope:{units:s.units.slice(),inds:s.inds.slice(),midCap:!!s.midCap},edited:false,state:{},endGraded:false,picker:null};
+    var _av={};
+    current=current.map(function(q){return _sd?tAdoptDrawn(q,_av):tFreezeSlot(q._entry,q.type,_av,T.salt);});
+  }
+  if(!TEACHER&&SHUFFLE_OPTS)current=current.map(shufQ);
+  renderOnline(true);
+}
+function renderOnline(scroll){
+  var s=lastSettings;var res={thin:onlineThin};
   var box=$("session");
   if(!current.length){box.innerHTML='<div class="card"><p>'+(s.units.length?"No questions match that selection yet.":"Choose at least one unit above ,  or use the Mid-course review or Final review button ,  then start again.")+'</p></div>';return;}
   var html='<div class="card'+(checkMode==="end"?" endmode":"")+'"><h2>Online practice</h2>'+refPanelsHtml(s.units)+(res.thin?'<p class="thinNote">Heads up: the question bank is still thin for this selection, so this set repeats practice on the same question shape (with new numbers) because there are not yet enough different questions to fill it.</p>':"")+'<p class="scoreline" id="score"></p>';
@@ -7511,9 +8244,9 @@ function startOnline(){
       +'<div class="rep" id="rep'+i+'"><label>What is the problem?<select id="reptype'+i+'"><option>The question looks wrong or unclear</option><option>The worked solution doesn\'t work out</option><option>My answer was marked wrong but should be right</option><option>Something else is out of place</option></select></label>'
       +'<label>Anything you noticed (optional)<textarea id="repnote'+i+'" rows="3"></textarea></label>'
       +(REPORT_FORM.url?'<p><button type="button" data-repsend="'+i+'">Send report</button> <button type="button" class="alt" data-repcopy="'+i+'">Copy report text instead</button></p>':'<p><button type="button" data-repcopy="'+i+'">Copy report text</button></p>')
-      +'<div class="repstat" id="repstat'+i+'"></div></div></div>';
+      +'<div class="repstat" id="repstat'+i+'"></div></div>'+tctlHtml(i)+'</div>';
   });
-  html+='<p>'+(checkMode==="end"?'<button type="button" id="gradeBtn">Check all my answers</button> ':"")+'<button type="button" id="againBtn">New set of questions</button></p><p><button type="button" class="alt" data-kahoot="1">Download for Kahoot</button> <button type="button" class="alt" data-blooket="1">Download for Blooket</button> <button type="button" class="alt" data-brightspace="1">Download for Brightspace</button> <label class="hint">Variants per question <select id="bsVarSel"><option value="5">5</option><option value="10" selected>10</option><option value="20">20</option></select></label></p><p class="hint" id="gameStatus"></p><div id="setSummary"></div></div>';
+  html+='<p>'+(checkMode==="end"?'<button type="button" id="gradeBtn">Check all my answers</button> ':"")+'<button type="button" id="againBtn">New set of questions</button></p>'+tBarHtml()+'<div id="setSummary"></div></div>';
   box.innerHTML=html;updateScore();typesetMath(box);
   Array.prototype.forEach.call(box.querySelectorAll("[data-check]"),function(b){b.addEventListener("click",function(){checkQ(+b.getAttribute("data-check"));});});
   Array.prototype.forEach.call(box.querySelectorAll("[data-sol]"),function(b){b.addEventListener("click",function(){toggleSolution(+b.getAttribute("data-sol"),b);});});
@@ -7523,11 +8256,9 @@ function startOnline(){
   Array.prototype.forEach.call(box.querySelectorAll("[data-repsend]"),function(b){b.addEventListener("click",function(){openReport(+b.getAttribute("data-repsend"));});});
   Array.prototype.forEach.call(box.querySelectorAll("[data-repcopy]"),function(b){b.addEventListener("click",function(){copyReport(+b.getAttribute("data-repcopy"));});});
   $("againBtn").addEventListener("click",startOnline);
-  Array.prototype.forEach.call(box.querySelectorAll("[data-kahoot]"),function(b){b.addEventListener("click",function(){exportGame("kahoot",current,$("gameStatus"));});});
-  Array.prototype.forEach.call(box.querySelectorAll("[data-blooket]"),function(b){b.addEventListener("click",function(){exportGame("blooket",current,$("gameStatus"));});});
-  Array.prototype.forEach.call(box.querySelectorAll("[data-brightspace]"),function(b){b.addEventListener("click",function(){exportBrightspace(current,$("gameStatus"));});});
   if($("gradeBtn"))$("gradeBtn").addEventListener("click",gradeAll);
-  box.scrollIntoView({behavior:scrollBehavior()});
+  tWireOnline();
+  if(scroll!==false)box.scrollIntoView({behavior:scrollBehavior()});
 }
 function stepHTML(h){
   var out="",i=0,inTex=false;
@@ -7703,33 +8434,49 @@ function recGrid(items,withKey){
 function startExam(){
   stopExamTimer();
   var s=settings();var _sd=activeSeed(s);sessionSeed=_sd;
-  var ex=withSeed(_sd,function(){return composeExam(s.units,s.inds);});
+  var pkOn=tPkOn();
+  var ex=withSeed(_sd,function(){return composeExam(s.units,s.inds,pkOn);});
   if(!ex||(!ex.srItems.length&&!ex.crItems.length)){$("session").innerHTML='<div class="card"><p>'+(s.units.length?"No questions match that selection yet.":"Choose at least one unit above, or use the Mid-course review or Final review button, then start again.")+'</p></div>';return;}
   var single=s.units.length===1;
   var wsCrF=(typeof s.wsCr==="number"&&!isNaN(s.wsCr))?s.wsCr:2.3;
   var scope=single?("Unit "+s.units[0]+" \u00B7 "+UNITS[s.units[0]]):s.units.map(function(u){return "Unit "+u;}).join(", ");
   var title=single?"Math 9: Practice Unit Test":"Math 9: Practice Exam";
   wordName=single?"Math 9 Practice Unit Test.docx":"Math 9 Practice Exam.docx";
+  T=null;
+  examState={ex:ex,s:s,single:single,wsCrF:wsCrF,scope:scope,title:title,t0:Date.now()};
+  if(TEACHER){
+    T={view:"exam",salt:tSalt(),scope:{units:s.units.slice(),inds:s.inds.slice(),includePK:pkOn,examCap:(s.units.slice().sort(function(a,b){return a-b;}).join()==="1,2,3,4")},edited:false,textEdited:false,picker:null};
+    var _av={};
+    ex.srItems.forEach(function(it){it.q=_sd?tAdoptDrawn(it.q,_av):tFreezeSlot(it.q._entry,"mc",_av,T.salt);});
+    ex.crItems.forEach(function(it){it.q=_sd?tAdoptDrawn(it.q,_av):tFreezeSlot(it.q._entry,it.q.type,_av,T.salt);});
+  }
+  if(!TEACHER&&SHUFFLE_OPTS){ex.srItems.forEach(function(it){it.q=shufQ(it.q);});ex.crItems.forEach(function(it){it.q=shufQ(it.q);});}
+  renderExam();
+}
+function renderExam(){
+  stopExamTimer();
+  var ex=examState.ex,s=examState.s,single=examState.single,wsCrF=examState.wsCrF,scope=examState.scope,title=examState.title;
+  var lv=examLive(ex);
   var paper='<div class="nameline"><div>Name:<span></span></div><div>Date:<span></span></div></div>';
-  paper+='<h1 style="font-size:1.3rem;">'+title+'</h1><p>'+scope+' \u00B7 Total marks: '+ex.total+'</p>';
+  paper+='<h1 style="font-size:1.3rem;">'+title+'</h1><p>'+scope+' \u00B7 Total marks: '+lv.total+'</p>';
   paper+='<p style="font-size:.92rem;">Answer all questions. In Section A, choose the best answer for each question and record it on the answer record at the end of Section A. In Section B, show all your work in the space provided; marks are shown beside each question.</p>';
   var n=0;
-  paper+='<h2 style="font-size:1.05rem;">Section A: Selected Response ('+ex.srMarks+' marks)</h2>';
+  paper+='<h2 style="font-size:1.05rem;">Section A: Selected Response ('+lv.sr+' marks)</h2>';
   ex.srItems.forEach(function(it){n++;var q=it.q;
     paper+='<div class="pq"><p><b>'+n+'.</b></p><div class="prompt">'+stepHTML(q.prompt)+'</div>';
     if(q.figure)paper+='<div class="fig">'+q.figure+'</div>';
     if(q.type==="mc")paper+='<div class="opts">'+q.options.map(function(o,oi){return '<label style="display:block;margin:4px 0;"><b>'+"ABCD"[oi]+'.</b> '+o+'</label>';}).join("")+'</div>';
     paper+='</div>';});
   paper+='<h2 style="font-size:1.05rem;">Answer record</h2><p style="font-size:.92rem;">Circle one letter for each Section A question.</p>'+recGrid(ex.srItems,false);
-  paper+='<h2 style="font-size:1.05rem;">Section B: Constructed Response ('+ex.crMarks+' marks)</h2>';
+  paper+='<h2 style="font-size:1.05rem;">Section B: Constructed Response ('+lv.cr+' marks)</h2>';
   if(!ex.crItems.length)paper+='<p>No constructed-response questions are available for this selection yet.</p>';
   ex.crItems.forEach(function(it){n++;var q=it.q;
     paper+='<div class="pq"><p><b>'+n+'.</b> <span style="font-size:.85rem;color:#555;">('+it.marks+' marks)</span></p><div class="prompt">'+stepHTML(q.prompt)+'</div>';
     if(q.figure)paper+='<div class="fig">'+q.figure+'</div>';
     var h=Math.max(80,Math.round(it.marks*62*wsCrF));if(wsCrF>0)paper+=wsBox(h);
     paper+='</div>';});
-  paper+='<p style="font-size:.85rem;color:#555;">Built to the 2026-2027 tables of specifications as closely as the question bank allows: selected response '+ex.srMarks+' marks, constructed response '+ex.crMarks+' marks, of which Level 3 carries '+ex.l3Marks+' marks.</p>';
-  var key='<h1 style="font-size:1.3rem;">'+title+': Answer Key</h1><p>'+scope+' \u00B7 Total marks: '+ex.total+'</p>';
+  paper+='<p style="font-size:.85rem;color:#555;">'+((T&&T.edited)?("This paper was edited from the blueprint: selected response "+lv.sr+" marks, constructed response "+lv.cr+" marks, of which Level 3 carries "+lv.l3+" marks."):("Built to the 2026-2027 tables of specifications as closely as the question bank allows: selected response "+lv.sr+" marks, constructed response "+lv.cr+" marks, of which Level 3 carries "+lv.l3+" marks."))+'</p>';
+  var key='<h1 style="font-size:1.3rem;">'+title+': Answer Key</h1><p>'+scope+' \u00B7 Total marks: '+lv.total+'</p>';
   key+='<h2 style="font-size:1.05rem;">Section A answers</h2><p style="font-size:.92rem;">The correct letter for each question, in the same layout as the answer record on the student paper.</p>';
   key+=recGrid(ex.srItems,true);
   key+='<h2 style="font-size:1.05rem;">Section B: worked solutions</h2>';
@@ -7740,23 +8487,25 @@ function startExam(){
   ex.srItems.forEach(function(it,ix){var q=it.q;key+='<div class="solp"><p><b>'+(ix+1)+'.</b> <b>('+"ABCD"[q.correct]+')</b></p><div>'+stepHTML(q.solution)+'</div></div>';});
   key+='</div>';
   $("printArea").innerHTML=paper;
-  $("session").innerHTML='<div class="card"><p>Your '+(single?"practice unit test":"practice exam")+' is ready: '+ex.srItems.length+' selected-response questions and '+ex.crItems.length+' constructed-response questions, '+ex.total+' marks in total. The exam paper and the answer key print separately.</p>'
-    +(ex.short?'<p class="thinNote">Heads up: the bank could not fill every exam slot for this selection yet, so this paper runs short of the full blueprint.</p>':"")
-    +'<div class="row"><button type="button" id="editExamBtn">Edit the exam</button><button type="button" id="printPaperBtn">Print the exam paper</button><button type="button" id="printKeyBtn" class="sec">Print the answer key</button><button type="button" id="wordBtn" class="sec">Download Word file</button><button type="button" id="copyDocsBtn" class="sec">Copy for Google Docs</button></div>'
-    +'<p class="hint" id="editHint" hidden>Editing is on: click any text in the exam below and type to change it, or delete a question you do not want. Drag the bar at the bottom of a Section B answer box to make that box taller or shorter. What you see is what prints and what the Word file contains.</p>'
+  $("session").innerHTML='<div class="card"><p>Your '+(single?"practice unit test":"practice exam")+' is ready: '+ex.srItems.length+' selected-response questions and '+ex.crItems.length+' constructed-response questions, '+lv.total+' marks in total. The exam paper and the answer key print separately.</p>'
+    +((T&&T.edited)?'<p class="thinNote">You edited this paper: it now has '+lv.sr+' selected-response marks and '+lv.cr+' constructed-response marks, '+lv.total+' marks in total. The paper, the answer key and the totals all follow the edited set.</p>':((ex.short||examShortNow(ex))?'<p class="thinNote">Heads up: the bank could not fill every exam slot for this selection yet, so this paper runs short of the full blueprint.</p>':""))
+    +tExamPanelHtml()
+    +'<div class="row">'+(TEACHER?'<button type="button" id="editExamBtn">Edit the exam</button>':"")+'<button type="button" id="printPaperBtn">Print the exam paper</button><button type="button" id="printKeyBtn" class="sec">Print the answer key</button><button type="button" id="wordBtn" class="sec">Download Word file</button><button type="button" id="copyDocsBtn" class="sec">Copy for Google Docs</button></div>'
+    +'<p class="hint" id="editHint" hidden>Editing is on: click any text in the exam below and type to change it, or delete a question you do not want. Drag the bar at the bottom of a Section B answer box to make that box taller or shorter. What you see is what prints and what copies.</p>'
     +'<p class="hint" id="copyStatus" role="status"></p>'
     +'<div class="sheetPrev" id="sheetPrev">'+paper+'<div class="keybreak">'+key+'</div></div></div>';
-  typesetMath($("sheetPrev"));typesetMath($("printArea"));
-  if(s.timer){var tc=document.createElement("div");tc.className="timerbar";tc.id="examTimer";var _card=$("session").querySelector(".card");if(_card)_card.insertBefore(tc,_card.firstChild);var _t0=Date.now();var _tick=function(){var sec=Math.floor((Date.now()-_t0)/1000);var mm=Math.floor(sec/60),ss=sec%60;tc.textContent="Time so far: "+mm+":"+(ss<10?"0":"")+ss+"  \u00B7  The real exam allows 1 hour 30 minutes. This timer is just a guide.";};_tick();window._examTimerInt=setInterval(_tick,1000);}
-  $("editExamBtn").addEventListener("click",function(){
+  typesetMath($("sheetPrev"));typesetMath($("printArea"));if($("tExamPanel"))typesetMath($("tExamPanel"));
+  if(s.timer){var tc=document.createElement("div");tc.className="timerbar";tc.id="examTimer";var _card=$("session").querySelector(".card");if(_card)_card.insertBefore(tc,_card.firstChild);var _t0=examState.t0;var _tick=function(){var sec=Math.floor((Date.now()-_t0)/1000);var mm=Math.floor(sec/60),ss=sec%60;tc.textContent="Time so far: "+mm+":"+(ss<10?"0":"")+ss+" \u00B7  The real exam allows 1 hour 30 minutes. This timer is just a guide.";};_tick();window._examTimerInt=setInterval(_tick,1000);}
+  if($("editExamBtn"))$("editExamBtn").addEventListener("click",function(){
     var prev=$("sheetPrev"),on=prev.getAttribute("contenteditable")==="true";
     if(on){prev.removeAttribute("contenteditable");prev.classList.remove("editing");$("editExamBtn").textContent="Edit the exam";$("editHint").hidden=true;}
-    else{prev.setAttribute("contenteditable","true");prev.classList.add("editing");$("editExamBtn").textContent="Done editing";$("editHint").hidden=false;setHandles(prev);prev.focus();}
+    else{prev.setAttribute("contenteditable","true");prev.classList.add("editing");$("editExamBtn").textContent="Done editing";$("editHint").hidden=false;setHandles(prev);prev.focus();if(T&&T.view==="exam"){T.textEdited=true;tPanelPause("tExamPanel");}}
   });
   $("wordBtn").addEventListener("click",function(){downloadWordFile($("copyStatus"));});
   $("copyDocsBtn").addEventListener("click",function(){copyFrom($("sheetPrev"),"docs",$("copyStatus"));});
   $("printPaperBtn").addEventListener("click",function(){var pp=previewParts();if(pp){$("printArea").innerHTML=pp.paper;}else{$("printArea").innerHTML=paper;typesetMath($("printArea"));}window.print();});
   $("printKeyBtn").addEventListener("click",function(){var pp=previewParts();if(pp){$("printArea").innerHTML=pp.key;}else{$("printArea").innerHTML=key;typesetMath($("printArea"));}window.print();});
+  tWireExam();
 }
 function startSheet(){
   stopExamTimer();
@@ -7764,6 +8513,19 @@ function startSheet(){
   if(s.mcCount+s.ncCount<1){$("session").innerHTML='<div class="card"><p>Set the Multiple choice and Constructed Response counts to at least one question in total, then make the sheet again.</p></div>';return;}
   var res=withSeed(_sd,function(){return drawSheetSet(s);});
   if(!res.items.length){$("session").innerHTML='<div class="card"><p>'+(s.units.length?"No questions match that selection yet.":"Choose at least one unit above ,  or use the Mid-course review or Final review button ,  then start again.")+'</p></div>';return;}
+  wordName="Math 9 Practice Sheet.docx";
+  T=null;
+  sheetState={items:res.items,s:s,thin:res.thin};
+  if(TEACHER){
+    T={view:"sheet",salt:tSalt(),scope:{units:s.units.slice(),inds:s.inds.slice(),midCap:!!s.midCap},edited:false,textEdited:false,picker:null};
+    var _av={};
+    sheetState.items=sheetState.items.map(function(q){return _sd?tAdoptDrawn(q,_av):tFreezeSlot(q._entry,q.type,_av,T.salt);});
+  }
+  if(!TEACHER&&SHUFFLE_OPTS)sheetState.items=sheetState.items.map(shufQ);
+  renderSheet();
+}
+function renderSheet(){
+  var s=sheetState.s;var res={items:sheetState.items,thin:sheetState.thin};
   var unitNames=s.units.map(function(u){return "Unit "+u;}).join(", ");
   wordName="Math 9 Practice Sheet.docx";
   var html='<div class="nameline"><div>Name:<span></span></div><div>Date:<span></span></div></div>';
@@ -7790,19 +8552,21 @@ function startSheet(){
   $("printArea").innerHTML=html;
   $("session").innerHTML='<div class="card"><p>Your practice sheet is ready ('+res.items.length+' questions'+(s.wantKey?', with the answer key on its own pages at the end':'')+'). It is shown below, exactly as it will print.</p>'
     +(res.thin?'<p class="thinNote">Heads up: the question bank is still thin for this selection, so this sheet repeats practice on the same question shape (with new numbers) because there are not yet enough different questions to fill it.</p>':"")
-    +'<div class="row"><button type="button" id="editBtn">Edit the sheet</button><button type="button" id="wordBtn" class="sec">Download Word file</button><button type="button" id="copyDocsBtn" class="sec">Copy for Google Docs</button><button type="button" id="printBtn" class="sec">Print / save the sheet</button></div>'
-    +'<p class="hint" id="editHint" hidden>Editing is on: click any text in the sheet below and type to change it, or delete a question you do not want. Drag the bar at the bottom of an answer box to make that box taller or shorter. What you see is what prints and what the Word file contains. Most math is regular text and can be changed directly; typeset expressions are rendered, so if you need different numbers in one of those, regenerate the sheet instead.</p>'
+    +tSheetPanelHtml()
+    +'<div class="row">'+(TEACHER?'<button type="button" id="editBtn">Edit the sheet</button>':"")+'<button type="button" id="wordBtn" class="sec">Download Word file</button><button type="button" id="copyDocsBtn" class="sec">Copy for Google Docs</button><button type="button" id="printBtn" class="sec">Print / save the sheet</button></div>'
+    +'<p class="hint" id="editHint" hidden>Editing is on: click any text in the sheet below and type to change it, or delete a question you do not want. Drag the bar at the bottom of an answer box to make that box taller or shorter. What you see is what prints and what copies. Most math is regular text and can be changed directly; typeset expressions are rendered, so if you need different numbers in one of those, regenerate the sheet instead.</p>'
     +'<p class="hint" id="copyStatus" role="status"></p>'
     +'<div class="sheetPrev" id="sheetPrev">'+html+'</div></div>';
-  typesetMath($("sheetPrev"));typesetMath($("printArea"));
-  $("editBtn").addEventListener("click",function(){
+  typesetMath($("sheetPrev"));typesetMath($("printArea"));if($("tSheetPanel"))typesetMath($("tSheetPanel"));
+  if($("editBtn"))$("editBtn").addEventListener("click",function(){
     var prev=$("sheetPrev"),on=prev.getAttribute("contenteditable")==="true";
     if(on){prev.removeAttribute("contenteditable");prev.classList.remove("editing");$("editBtn").textContent="Edit the sheet";$("editHint").hidden=true;}
-    else{prev.setAttribute("contenteditable","true");prev.classList.add("editing");$("editBtn").textContent="Done editing";$("editHint").hidden=false;setHandles(prev);prev.focus();}
+    else{prev.setAttribute("contenteditable","true");prev.classList.add("editing");$("editBtn").textContent="Done editing";$("editHint").hidden=false;setHandles(prev);prev.focus();if(T&&T.view==="sheet"){T.textEdited=true;tPanelPause("tSheetPanel");}}
   });
   $("wordBtn").addEventListener("click",function(){downloadWordFile($("copyStatus"));});
   $("copyDocsBtn").addEventListener("click",function(){copyFrom($("sheetPrev"),"docs",$("copyStatus"));});
   $("printBtn").addEventListener("click",function(){$("printArea").innerHTML=$("sheetPrev").innerHTML;window.print();});
+  tWireSheet();
 }
 /* Answer boxes on sheets and exams: the box markup carries a drag handle
    on its bottom edge. In edit mode the handle shows; dragging it stamps an
@@ -8773,8 +9537,11 @@ function applyURL(){
   else if(p.get("ws")!==null&&$("wsCrIn"))$("wsCrIn").value=p.get("ws");
   if(p.get("chk")==="end"&&$("chkIn"))$("chkIn").value="end";
   if(p.get("tm")==="1"&&$("timerChk"))$("timerChk").checked=true;
+  if(p.get("pk")==="1"&&$("pkChk"))$("pkChk").checked=true;
   if(p.get("seed")&&$("seedIn"))$("seedIn").value=p.get("seed");
   if(p.get("levels")){var lv=p.get("levels").split(",").map(Number);if(lv.length===3){$("lv1").value=lv[0];$("lv2").value=lv[1];$("lv3").value=lv[2];$("advBox").open=true;}}
+  if(p.get("teacher")==="1"){TEACHER=true;var tn=$("teacherNote");if(tn)tn.hidden=false;}
+  if(p.get("shuf")==="1")SHUFFLE_OPTS=true;
   return touched;
 }
 function setPreset(units,cap,mix){state.units=units;state.inds=[];state.midCap=!!cap;if(mix){$("lv1").value=mix[0];$("lv2").value=mix[1];$("lv3").value=mix[2];}unitCheckboxes();renderIndicators();updatePoolInfo();}
@@ -8790,15 +9557,23 @@ $("goOnline").addEventListener("click",startOnline);
 $("goSheet").addEventListener("click",startSheet);
 $("goExam").addEventListener("click",startExam);
 $("copyLink").addEventListener("click",function(){
-  var url=location.origin+settingsToURL();
+  /* Hard rule (Jason, Nov 10, 2026): a shared link NEVER carries teacher
+     mode. When a teacher set is on screen the link carries the set itself
+     (tShareURL with teacher mode stripped); otherwise it is the plain
+     settings link, which settingsToURL builds without the flag anyway. */
+  var url=(T&&T.view)?tShareURL(false):(location.origin+tStripTeacher(settingsToURL()));
   if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url);}
   $("poolInfo").textContent="Link copied (or copy it from the address bar): "+url;
-  history.replaceState(null,"",settingsToURL());
+  history.replaceState(null,"",url.slice(location.origin.length));
 });
 a11yInit();
 var urlTouched=applyURL();
+tGateStudentUI();
 unitCheckboxes();renderIndicators();updatePoolInfo();
-if(urlTouched&&(new URLSearchParams(location.search).get("unit")||new URLSearchParams(location.search).get("preset")||new URLSearchParams(location.search).get("indicator"))){
+if(new URLSearchParams(location.search).get("set")&&tRebuildFromURL()){
+  /* A set link was opened: the exact set it encodes is on screen. */
+}
+else if(urlTouched&&(new URLSearchParams(location.search).get("unit")||new URLSearchParams(location.search).get("preset")||new URLSearchParams(location.search).get("indicator"))){
   var _m=(new URLSearchParams(location.search).get("mode"));if(_m==="sheet"||_m==="worksheet"){startSheet();}else if(_m==="exam"){startExam();}else{startOnline();}
 }
 </script>
