@@ -6509,16 +6509,18 @@ E("u1-gap-brackets-cr", 1, ["6.2"], 2, "gen", function () {
 
 /* Unit 2: Square Roots and Surface Area */
 
-// PG. L2, 6.5, CR 2: estimate a square root from the closest perfect square, then the gap.
+// PG. L2, 6.5, CR 2: estimate a square root to 1 decimal place from the closest perfect squares (revised Nov 12, 2026 at Jason's direction: the earlier version also asked for the gap to the perfect square, two asks in one question; now the estimate only, tolerance 0.1, worked solution gives the best estimate).
 E("u2-gap-estimate-gap-cr", 2, ["6.5"], 2, "gen", function () {
   var n = u2nonSquare(30, 95);
   var lo = Math.floor(Math.sqrt(n));
   var gapLo = n - lo * lo, gapHi = (lo + 1) * (lo + 1) - n;
   var best = gapLo <= gapHi ? lo : lo + 1;
-  var ans = Math.abs(n - best * best);
-  var prompt = "Estimate \\(\\sqrt{" + n + "}\\) using the closest perfect square. Find the difference between " + n + " and that perfect square.";
-  var sol = "The perfect squares near " + n + " are \\(" + lo + "^{2} = " + (lo * lo) + "\\) and \\(" + (lo + 1) + "^{2} = " + ((lo + 1) * (lo + 1)) + "\\). The closer one is \\(" + best + "^{2} = " + (best * best) + "\\): \\[ \\begin{aligned} \\text{difference} &= |" + n + " - " + (best * best) + "| = " + ans + " \\end{aligned} \\] The answer is <b>" + ans + "</b>.";
-  return numq(prompt, ans, 0.01, sol, { mode: "gap-estimate-gap", n: n, best: best });
+  var est = Math.round(Math.sqrt(n) * 10) / 10;
+  var t1 = Math.round((est - 0.1) * 10) / 10, t2 = Math.round((est + 0.1) * 10) / 10;
+  var sq = function (x) { return Math.round(x * x * 100) / 100; };
+  var prompt = "Estimate \\(\\sqrt{" + n + "}\\). Give your answer to 1 decimal place.";
+  var sol = "The perfect squares near " + n + " are \\(" + lo + "^{2} = " + (lo * lo) + "\\) and \\(" + (lo + 1) + "^{2} = " + ((lo + 1) * (lo + 1)) + "\\), so \\(\\sqrt{" + n + "}\\) lies between " + lo + " and " + (lo + 1) + ", nearer to " + best + ". Squaring the tenths around the estimate: \\[ \\begin{aligned} " + fmt(t1, 1) + "^{2} &= " + fmt(sq(t1), 2) + " \\\\ " + fmt(est, 1) + "^{2} &= " + fmt(sq(est), 2) + " \\\\ " + fmt(t2, 1) + "^{2} &= " + fmt(sq(t2), 2) + " \\end{aligned} \\] " + fmt(sq(est), 2) + " is the closest of these to " + n + ", so the best estimate is <b>" + fmt(est, 1) + "</b>.";
+  return numq(prompt, est, 0.1, sol, { mode: "gap-estimate-gap", n: n, best: best });
 }, ["An estimate uses the perfect square nearest to the number under the root.", "List the perfect squares just below and just above the number first."]);
 
 // PG. L2, 9.3, CR 3: surface area of a square pyramid with the slant height derived by Pythagoras.
